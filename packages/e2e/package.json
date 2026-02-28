@@ -1,0 +1,26 @@
+{
+  "name": "@bankers-bot/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "End-to-end tests for the BROKER OTC protocol",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@bankers-bot/sdk": "workspace:*",
+    "viem": "^2.23.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
