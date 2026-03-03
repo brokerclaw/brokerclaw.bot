@@ -93,7 +93,7 @@ export const TIMES = {
 /** Mock MCP tool definitions matching the protocol */
 export const MCP_TOOLS = [
   {
-    name: "bankers_create_offer",
+    name: "brokers_create_offer",
     description: "Create a new OTC offer on the BROKER protocol",
     inputSchema: {
       type: "object" as const,
@@ -109,7 +109,7 @@ export const MCP_TOOLS = [
     },
   },
   {
-    name: "bankers_fill_offer",
+    name: "brokers_fill_offer",
     description: "Fill an existing OTC offer",
     inputSchema: {
       type: "object" as const,
@@ -121,7 +121,7 @@ export const MCP_TOOLS = [
     },
   },
   {
-    name: "bankers_get_offer",
+    name: "brokers_get_offer",
     description: "Get details of an offer",
     inputSchema: {
       type: "object" as const,
@@ -132,7 +132,7 @@ export const MCP_TOOLS = [
     },
   },
   {
-    name: "bankers_list_offers",
+    name: "brokers_list_offers",
     description: "List offers with optional filters",
     inputSchema: {
       type: "object" as const,
@@ -143,7 +143,7 @@ export const MCP_TOOLS = [
     },
   },
   {
-    name: "bankers_request_quote",
+    name: "brokers_request_quote",
     description: "Request a quote from market makers",
     inputSchema: {
       type: "object" as const,
@@ -156,7 +156,7 @@ export const MCP_TOOLS = [
     },
   },
   {
-    name: "bankers_get_reputation",
+    name: "brokers_get_reputation",
     description: "Get reputation score for an agent",
     inputSchema: {
       type: "object" as const,

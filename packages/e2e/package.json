@@ -1,5 +1,5 @@
 {
-  "name": "@bankers-bot/e2e",
+  "name": "@brokers-bot/e2e",
   "version": "0.1.0",
   "private": true,
   "description": "End-to-end tests for the BROKER OTC protocol",
@@ -12,7 +12,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@bankers-bot/sdk": "workspace:*",
+    "@brokers-bot/sdk": "workspace:*",
     "viem": "^2.23.2"
   },
   "devDependencies": {

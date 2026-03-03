@@ -6,7 +6,7 @@ import { formatTokenAmount, tokenSymbol, abbreviateAddress, formatTimestamp } fr
 export function registerDealsResource(server: McpServer): void {
   server.resource(
     "deals",
-    "bankers://deals",
+    "brokers://deals",
     {
       description: "Recent completed deals on the BROKER protocol",
       mimeType: "text/plain",

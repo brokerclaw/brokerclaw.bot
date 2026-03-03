@@ -7,11 +7,11 @@ import { resolveToken, parseTokenAmount, hoursToSeconds, requireWallet } from ".
 
 export function registerRfqTools(server: McpServer): void {
   /**
-   * bankers_request_quote — Broadcast an RFQ (Request for Quote)
+   * brokers_request_quote — Broadcast an RFQ (Request for Quote)
    */
   server.tool(
-    "bankers_request_quote",
-    "Broadcast a Request for Quote (RFQ) to the Bankers Bot network. You specify what you have and what you want, and market makers respond with quotes.",
+    "brokers_request_quote",
+    "Broadcast a Request for Quote (RFQ) to the Brokers Bot network. You specify what you have and what you want, and market makers respond with quotes.",
     {
       tokenA: z.string().describe("Token you have to offer (address or symbol)"),
       amountA: z.string().describe("Amount of tokenA you want to trade (human readable)"),
@@ -49,7 +49,7 @@ export function registerRfqTools(server: McpServer): void {
                 `  Seeking: ${tokenSymbol(tokenBAddr)}`,
                 `  Expires in: ${expiryHours} hours`,
                 "",
-                "Market makers will submit quotes. Check with bankers_get_quotes once the request ID is available.",
+                "Market makers will submit quotes. Check with brokers_get_quotes once the request ID is available.",
               ].join("\n"),
             },
           ],
@@ -64,10 +64,10 @@ export function registerRfqTools(server: McpServer): void {
   );
 
   /**
-   * bankers_get_quotes — Get all quotes submitted for an RFQ
+   * brokers_get_quotes — Get all quotes submitted for an RFQ
    */
   server.tool(
-    "bankers_get_quotes",
+    "brokers_get_quotes",
     "Get all quotes submitted for a specific RFQ request.",
     {
       requestId: z.union([z.string(), z.number()]).describe("The RFQ request ID"),
@@ -143,10 +143,10 @@ export function registerRfqTools(server: McpServer): void {
   );
 
   /**
-   * bankers_submit_quote — Respond to an RFQ with a quote
+   * brokers_submit_quote — Respond to an RFQ with a quote
    */
   server.tool(
-    "bankers_submit_quote",
+    "brokers_submit_quote",
     "Submit a quote in response to an RFQ. You specify how much tokenB you'll provide.",
     {
       requestId: z.union([z.string(), z.number()]).describe("The RFQ request ID to quote on"),
@@ -196,10 +196,10 @@ export function registerRfqTools(server: McpServer): void {
   );
 
   /**
-   * bankers_accept_quote — Accept a quote from an RFQ
+   * brokers_accept_quote — Accept a quote from an RFQ
    */
   server.tool(
-    "bankers_accept_quote",
+    "brokers_accept_quote",
     "Accept a specific quote from an RFQ. This executes the trade.",
     {
       quoteId: z.union([z.string(), z.number()]).describe("The quote ID to accept"),

@@ -6,7 +6,7 @@ import { formatTokenAmount, tokenSymbol, abbreviateAddress, formatRfqStatus } fr
 export function registerRfqResource(server: McpServer): void {
   server.resource(
     "rfq",
-    "bankers://rfq",
+    "brokers://rfq",
     {
       description: "Active RFQ (Request for Quote) requests on the BROKER protocol",
       mimeType: "text/plain",

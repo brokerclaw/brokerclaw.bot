@@ -34,7 +34,7 @@ import type {
  *
  * @example
  * ```ts
- * import { BrokerClient } from "@bankers-bot/sdk";
+ * import { BrokerClient } from "@brokers-bot/sdk";
  * import { createPublicClient, createWalletClient, http } from "viem";
  * import { base } from "viem/chains";
  *

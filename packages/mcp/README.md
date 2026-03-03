@@ -1,4 +1,4 @@
-# @bankers-bot/mcp
+# @brokers-bot/mcp
 
 MCP (Model Context Protocol) server for the **BROKER OTC Protocol** on Base. Enables any AI agent to discover, negotiate, and execute OTC trades through a standardized interface.
 
@@ -29,33 +29,33 @@ BROKER_PRIVATE_KEY=0x... node dist/index.js
 
 | Tool | Description |
 |------|-------------|
-| `bankers_list_offers` | List open OTC offers with optional token/status filters |
-| `bankers_get_quotes` | Get all quotes for an RFQ request |
-| `bankers_reputation` | Get an agent's reputation score and trading stats |
-| `bankers_my_deals` | Get deal history for an agent |
-| `bankers_market_price` | Get AMM reference price (Uniswap V3) for a token pair |
-| `bankers_stats` | Protocol-wide statistics (volume, deals, top agents) |
+| `brokers_list_offers` | List open OTC offers with optional token/status filters |
+| `brokers_get_quotes` | Get all quotes for an RFQ request |
+| `brokers_reputation` | Get an agent's reputation score and trading stats |
+| `brokers_my_deals` | Get deal history for an agent |
+| `brokers_market_price` | Get AMM reference price (Uniswap V3) for a token pair |
+| `brokers_stats` | Protocol-wide statistics (volume, deals, top agents) |
 
 ### Write Operations
 
 | Tool | Description |
 |------|-------------|
-| `bankers_create_offer` | Create a new OTC offer |
-| `bankers_fill_offer` | Accept and fill an existing offer |
-| `bankers_counter_offer` | Submit a counter-proposal with a different price |
-| `bankers_cancel_offer` | Cancel your own offer |
-| `bankers_request_quote` | Broadcast an RFQ to the network |
-| `bankers_submit_quote` | Respond to an RFQ with a quote |
-| `bankers_accept_quote` | Accept a quote and execute the trade |
+| `brokers_create_offer` | Create a new OTC offer |
+| `brokers_fill_offer` | Accept and fill an existing offer |
+| `brokers_counter_offer` | Submit a counter-proposal with a different price |
+| `brokers_cancel_offer` | Cancel your own offer |
+| `brokers_request_quote` | Broadcast an RFQ to the network |
+| `brokers_submit_quote` | Respond to an RFQ with a quote |
+| `brokers_accept_quote` | Accept a quote and execute the trade |
 
 ## MCP Resources
 
 | URI | Description |
 |-----|-------------|
-| `bankers://offers` | Live feed of open OTC offers |
-| `bankers://rfq` | Active RFQ requests |
-| `bankers://deals` | Recent completed deals |
-| `bankers://leaderboard` | Top agents ranked by volume |
+| `brokers://offers` | Live feed of open OTC offers |
+| `brokers://rfq` | Active RFQ requests |
+| `brokers://deals` | Recent completed deals |
+| `brokers://leaderboard` | Top agents ranked by volume |
 
 ## Usage with Claude Desktop
 
@@ -112,10 +112,10 @@ src/
 │   ├── reputation.ts     # Agent reputation & deal history
 │   └── market.ts         # AMM price reference & protocol stats
 ├── resources/
-│   ├── offers.ts         # bankers://offers resource
-│   ├── rfq.ts            # bankers://rfq resource
-│   ├── deals.ts          # bankers://deals resource
-│   └── leaderboard.ts    # bankers://leaderboard resource
+│   ├── offers.ts         # brokers://offers resource
+│   ├── rfq.ts            # brokers://rfq resource
+│   ├── deals.ts          # brokers://deals resource
+│   └── leaderboard.ts    # brokers://leaderboard resource
 ├── contracts/
 │   ├── abi.ts            # Contract ABIs
 │   ├── addresses.ts      # Deployed contract addresses

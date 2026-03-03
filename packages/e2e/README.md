@@ -1,6 +1,6 @@
-# @bankers-bot/e2e
+# @brokers-bot/e2e
 
-End-to-end tests for the **Bankers Bot OTC Protocol** on Base.
+End-to-end tests for the **Brokers Bot OTC Protocol** on Base.
 
 ## Prerequisites
 
@@ -53,7 +53,7 @@ Tests use:
 - **viem** for blockchain interaction
 - **Anvil** as the local test chain (Foundry)
 - **vitest** as the test runner
-- **@bankers-bot/sdk** for protocol interaction
+- **@brokers-bot/sdk** for protocol interaction
 
 ### Test Accounts
 

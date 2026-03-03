@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>Leaderboard — Bankers Bot</title>
+	<title>Leaderboard — Brokers Bot</title>
 </svelte:head>
 
 <div class="space-y-8 animate-fade-in">

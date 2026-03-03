@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from "vitest";
 import { type TestEnvironment, setupTestEnvironment, snapshot, revert, getBlockTimestamp } from "../src/setup.js";
 import { getBalance, futureTimestamp } from "../src/helpers.js";
-import { BrokerClient, OfferStatus, RFQStatus } from "@bankers-bot/sdk";
+import { BrokerClient, OfferStatus, RFQStatus } from "@brokers-bot/sdk";
 import type { Address } from "viem";
 import { AMOUNTS, TEST_ACCOUNTS, MCP_TOOLS } from "../src/fixtures.js";
 
@@ -18,7 +18,7 @@ class MockMCPServer {
   }
 
   private registerTools(): void {
-    this.tools.set("bankers_create_offer", async (args) => {
+    this.tools.set("brokers_create_offer", async (args) => {
       const sellToken = (args.sellToken ?? this.tokenA) as Address;
       const buyToken = (args.buyToken ?? this.tokenB) as Address;
       const sellAmount = BigInt(args.sellAmount);
@@ -48,7 +48,7 @@ class MockMCPServer {
       };
     });
 
-    this.tools.set("bankers_fill_offer", async (args) => {
+    this.tools.set("brokers_fill_offer", async (args) => {
       const offerId = BigInt(args.offerId);
       const fillAmount = args.fillAmount ? BigInt(args.fillAmount) : undefined;
 
@@ -67,7 +67,7 @@ class MockMCPServer {
       };
     });
 
-    this.tools.set("bankers_get_offer", async (args) => {
+    this.tools.set("brokers_get_offer", async (args) => {
       const offerId = BigInt(args.offerId);
       const offer = await this.client.getOffer(offerId);
 
@@ -90,7 +90,7 @@ class MockMCPServer {
       };
     });
 
-    this.tools.set("bankers_list_offers", async (args) => {
+    this.tools.set("brokers_list_offers", async (args) => {
       const offers = await this.client.listOffers({
         maker: args.maker as Address | undefined,
         status: args.status !== undefined ? Number(args.status) as OfferStatus : undefined,
@@ -114,7 +114,7 @@ class MockMCPServer {
       };
     });
 
-    this.tools.set("bankers_request_quote", async (args) => {
+    this.tools.set("brokers_request_quote", async (args) => {
       const sellToken = (args.sellToken ?? this.tokenA) as Address;
       const buyToken = (args.buyToken ?? this.tokenB) as Address;
       const sellAmount = BigInt(args.sellAmount);
@@ -140,7 +140,7 @@ class MockMCPServer {
       };
     });
 
-    this.tools.set("bankers_get_reputation", async (args) => {
+    this.tools.set("brokers_get_reputation", async (args) => {
       const agent = args.agent as Address;
       const rep = await this.client.getReputation(agent);
 
@@ -202,18 +202,18 @@ describe("MCP Integration", () => {
       expect(result.tools.length).toBeGreaterThanOrEqual(6);
 
       const names = result.tools.map((t) => t.name);
-      expect(names).toContain("bankers_create_offer");
-      expect(names).toContain("bankers_fill_offer");
-      expect(names).toContain("bankers_get_offer");
-      expect(names).toContain("bankers_list_offers");
-      expect(names).toContain("bankers_request_quote");
-      expect(names).toContain("bankers_get_reputation");
+      expect(names).toContain("brokers_create_offer");
+      expect(names).toContain("brokers_fill_offer");
+      expect(names).toContain("brokers_get_offer");
+      expect(names).toContain("brokers_list_offers");
+      expect(names).toContain("brokers_request_quote");
+      expect(names).toContain("brokers_get_reputation");
     });
 
     it("should have correct input schemas for each tool", () => {
       const result = mcpServer.listTools();
 
-      const createOffer = result.tools.find((t) => t.name === "bankers_create_offer");
+      const createOffer = result.tools.find((t) => t.name === "brokers_create_offer");
       expect(createOffer).toBeDefined();
       expect(createOffer!.inputSchema.required).toContain("sellToken");
       expect(createOffer!.inputSchema.required).toContain("buyToken");
@@ -226,7 +226,7 @@ describe("MCP Integration", () => {
     it("should create an offer through the MCP tool", async () => {
       const now = await getBlockTimestamp(env.publicClient);
 
-      const result = (await mcpServer.callTool("bankers_create_offer", {
+      const result = (await mcpServer.callTool("brokers_create_offer", {
         sellToken: env.tokenA,
         buyToken: env.tokenB,
         sellAmount: AMOUNTS.standard.toString(),
@@ -247,7 +247,7 @@ describe("MCP Integration", () => {
       const now = await getBlockTimestamp(env.publicClient);
 
       // Create via MCP
-      const createResult = (await mcpServer.callTool("bankers_create_offer", {
+      const createResult = (await mcpServer.callTool("brokers_create_offer", {
         sellToken: env.tokenA,
         buyToken: env.tokenB,
         sellAmount: AMOUNTS.standard.toString(),
@@ -258,7 +258,7 @@ describe("MCP Integration", () => {
       const createData = JSON.parse(createResult.content[0].text);
 
       // Get via MCP
-      const getResult = (await mcpServer.callTool("bankers_get_offer", {
+      const getResult = (await mcpServer.callTool("brokers_get_offer", {
         offerId: createData.offerId,
       })) as { content: Array<{ type: string; text: string }> };
 
@@ -284,7 +284,7 @@ describe("MCP Integration", () => {
 
       // Fill via MCP (using taker's client)
       const takerMCP = new MockMCPServer(env.brokerTaker, env.tokenA, env.tokenB);
-      const result = (await takerMCP.callTool("bankers_fill_offer", {
+      const result = (await takerMCP.callTool("brokers_fill_offer", {
         offerId: offerId.toString(),
       })) as { content: Array<{ type: string; text: string }> };
 
@@ -292,7 +292,7 @@ describe("MCP Integration", () => {
       expect(data.hash).toBeDefined();
 
       // Verify filled
-      const getResult = (await mcpServer.callTool("bankers_get_offer", {
+      const getResult = (await mcpServer.callTool("brokers_get_offer", {
         offerId: offerId.toString(),
       })) as { content: Array<{ type: string; text: string }> };
 
@@ -315,7 +315,7 @@ describe("MCP Integration", () => {
         });
       }
 
-      const result = (await mcpServer.callTool("bankers_list_offers", {
+      const result = (await mcpServer.callTool("brokers_list_offers", {
         maker: TEST_ACCOUNTS.maker.address,
       })) as { content: Array<{ type: string; text: string }> };
 
@@ -329,7 +329,7 @@ describe("MCP Integration", () => {
     it("should create an RFQ through the MCP tool", async () => {
       const now = await getBlockTimestamp(env.publicClient);
 
-      const result = (await mcpServer.callTool("bankers_request_quote", {
+      const result = (await mcpServer.callTool("brokers_request_quote", {
         sellToken: env.tokenA,
         buyToken: env.tokenB,
         sellAmount: AMOUNTS.standard.toString(),
@@ -344,7 +344,7 @@ describe("MCP Integration", () => {
 
   describe("Get Reputation via MCP", () => {
     it("should return reputation data through the MCP tool", async () => {
-      const result = (await mcpServer.callTool("bankers_get_reputation", {
+      const result = (await mcpServer.callTool("brokers_get_reputation", {
         agent: TEST_ACCOUNTS.maker.address,
       })) as { content: Array<{ type: string; text: string }> };
 
@@ -356,7 +356,7 @@ describe("MCP Integration", () => {
 
     it("should reflect reputation changes after deals", async () => {
       // Get initial reputation
-      const beforeResult = (await mcpServer.callTool("bankers_get_reputation", {
+      const beforeResult = (await mcpServer.callTool("brokers_get_reputation", {
         agent: TEST_ACCOUNTS.maker.address,
       })) as { content: Array<{ type: string; text: string }> };
       const before = JSON.parse(beforeResult.content[0].text);
@@ -373,7 +373,7 @@ describe("MCP Integration", () => {
       await env.brokerTaker.fillOffer({ offerId });
 
       // Check updated reputation
-      const afterResult = (await mcpServer.callTool("bankers_get_reputation", {
+      const afterResult = (await mcpServer.callTool("brokers_get_reputation", {
         agent: TEST_ACCOUNTS.maker.address,
       })) as { content: Array<{ type: string; text: string }> };
       const after = JSON.parse(afterResult.content[0].text);
@@ -385,14 +385,14 @@ describe("MCP Integration", () => {
   describe("Error Handling", () => {
     it("should throw for unknown tools", async () => {
       await expect(
-        mcpServer.callTool("bankers_nonexistent", {})
-      ).rejects.toThrow("Unknown tool: bankers_nonexistent");
+        mcpServer.callTool("brokers_nonexistent", {})
+      ).rejects.toThrow("Unknown tool: brokers_nonexistent");
     });
 
     it("should propagate contract errors through MCP", async () => {
       // Try to fill a non-existent offer
       await expect(
-        mcpServer.callTool("bankers_fill_offer", {
+        mcpServer.callTool("brokers_fill_offer", {
           offerId: "999999",
         })
       ).rejects.toThrow();
@@ -400,7 +400,7 @@ describe("MCP Integration", () => {
 
     it("should handle invalid arguments gracefully", async () => {
       await expect(
-        mcpServer.callTool("bankers_create_offer", {
+        mcpServer.callTool("brokers_create_offer", {
           sellToken: "not-an-address",
           buyToken: env.tokenB,
           sellAmount: AMOUNTS.standard.toString(),
@@ -416,7 +416,7 @@ describe("MCP Integration", () => {
       const now = await getBlockTimestamp(env.publicClient);
 
       // 1. Create offer via MCP
-      const createResult = (await mcpServer.callTool("bankers_create_offer", {
+      const createResult = (await mcpServer.callTool("brokers_create_offer", {
         sellToken: env.tokenA,
         buyToken: env.tokenB,
         sellAmount: AMOUNTS.standard.toString(),
@@ -427,28 +427,28 @@ describe("MCP Integration", () => {
       const { offerId } = JSON.parse(createResult.content[0].text);
 
       // 2. Verify offer via MCP
-      const getResult = (await mcpServer.callTool("bankers_get_offer", {
+      const getResult = (await mcpServer.callTool("brokers_get_offer", {
         offerId,
       })) as { content: Array<{ type: string; text: string }> };
       const offerBefore = JSON.parse(getResult.content[0].text);
       expect(offerBefore.status).toBe(OfferStatus.Open);
 
       // 3. Fill offer via MCP (taker)
-      const fillResult = (await takerMCP.callTool("bankers_fill_offer", {
+      const fillResult = (await takerMCP.callTool("brokers_fill_offer", {
         offerId,
       })) as { content: Array<{ type: string; text: string }> };
       const fillData = JSON.parse(fillResult.content[0].text);
       expect(fillData.hash).toBeDefined();
 
       // 4. Verify filled via MCP
-      const verifyResult = (await mcpServer.callTool("bankers_get_offer", {
+      const verifyResult = (await mcpServer.callTool("brokers_get_offer", {
         offerId,
       })) as { content: Array<{ type: string; text: string }> };
       const offerAfter = JSON.parse(verifyResult.content[0].text);
       expect(offerAfter.status).toBe(OfferStatus.Filled);
 
       // 5. Check reputation via MCP
-      const repResult = (await mcpServer.callTool("bankers_get_reputation", {
+      const repResult = (await mcpServer.callTool("brokers_get_reputation", {
         agent: TEST_ACCOUNTS.maker.address,
       })) as { content: Array<{ type: string; text: string }> };
       const rep = JSON.parse(repResult.content[0].text);

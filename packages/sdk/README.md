@@ -1,17 +1,17 @@
-# @bankers-bot/sdk
+# @brokers-bot/sdk
 
-TypeScript SDK for the **Bankers Bot OTC Protocol** on Base.
+TypeScript SDK for the **Brokers Bot OTC Protocol** on Base.
 
 ## Installation
 
 ```bash
-pnpm add @bankers-bot/sdk viem
+pnpm add @brokers-bot/sdk viem
 ```
 
 ## Quick Start
 
 ```typescript
-import { BrokerClient } from "@bankers-bot/sdk";
+import { BrokerClient } from "@brokers-bot/sdk";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
@@ -99,7 +99,7 @@ import {
   formatBps,
   isExpired,
   formatOfferSummary,
-} from "@bankers-bot/sdk";
+} from "@brokers-bot/sdk";
 
 formatTokenAmount(1000000000000000000n); // "1.0"
 calculateFee(1000n, 30n); // 3n (0.3%)

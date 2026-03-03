@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import { type TestEnvironment, setupTestEnvironment, snapshot, revert, getBlockTimestamp } from "../src/setup.js";
 import { createStandardRFQ, getBalance, futureTimestamp } from "../src/helpers.js";
-import { RFQStatus } from "@bankers-bot/sdk";
+import { RFQStatus } from "@brokers-bot/sdk";
 import { AMOUNTS, TEST_ACCOUNTS } from "../src/fixtures.js";
 
 describe("RFQ Flow", () => {

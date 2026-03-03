@@ -6,7 +6,7 @@ import { formatOffer } from "../utils/format.js";
 export function registerOffersResource(server: McpServer): void {
   server.resource(
     "offers",
-    "bankers://offers",
+    "brokers://offers",
     {
       description: "Live feed of open OTC offers on the BROKER protocol",
       mimeType: "text/plain",

@@ -6,11 +6,11 @@ import { formatReputation, abbreviateAddress, formatSuccessRate, formatTokenAmou
 
 export function registerReputationTools(server: McpServer): void {
   /**
-   * bankers_reputation — Get an agent's reputation score and stats
+   * brokers_reputation — Get an agent's reputation score and stats
    */
   server.tool(
-    "bankers_reputation",
-    "Get the reputation score and trading stats for a specific agent address on the Bankers Bot protocol.",
+    "brokers_reputation",
+    "Get the reputation score and trading stats for a specific agent address on the Brokers Bot protocol.",
     {
       agentAddress: z.string().describe("Ethereum address of the agent to look up"),
     },
@@ -44,11 +44,11 @@ export function registerReputationTools(server: McpServer): void {
   );
 
   /**
-   * bankers_my_deals — Get deal history for an agent
+   * brokers_my_deals — Get deal history for an agent
    */
   server.tool(
-    "bankers_my_deals",
-    "Get the trade/deal history for a specific agent on the Bankers Bot protocol.",
+    "brokers_my_deals",
+    "Get the trade/deal history for a specific agent on the Brokers Bot protocol.",
     {
       agentAddress: z.string().describe("Ethereum address of the agent"),
       limit: z.number().int().min(1).max(100).default(20).describe("Maximum number of deals to return"),

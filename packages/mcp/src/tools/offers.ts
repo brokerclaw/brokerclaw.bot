@@ -13,11 +13,11 @@ import {
 
 export function registerOfferTools(server: McpServer): void {
   /**
-   * bankers_list_offers — List open OTC offers
+   * brokers_list_offers — List open OTC offers
    */
   server.tool(
-    "bankers_list_offers",
-    "List open OTC offers on the Bankers Bot protocol. Optionally filter by token address/symbol and status.",
+    "brokers_list_offers",
+    "List open OTC offers on the Brokers Bot protocol. Optionally filter by token address/symbol and status.",
     {
       token: z.string().optional().describe("Token address or symbol to filter by (e.g., 'USDC' or '0x...')"),
       status: z.enum(["open", "filled", "cancelled", "expired", "countered"]).optional().describe("Filter by offer status"),
@@ -84,11 +84,11 @@ export function registerOfferTools(server: McpServer): void {
   );
 
   /**
-   * bankers_create_offer — Create a new OTC offer
+   * brokers_create_offer — Create a new OTC offer
    */
   server.tool(
-    "bankers_create_offer",
-    "Create a new OTC offer on the Bankers Bot protocol. You sell tokenA and want tokenB in return.",
+    "brokers_create_offer",
+    "Create a new OTC offer on the Brokers Bot protocol. You sell tokenA and want tokenB in return.",
     {
       tokenA: z.string().describe("Token you are selling (address or symbol, e.g., 'WETH')"),
       amountA: z.string().describe("Amount of tokenA to sell (human readable, e.g., '1.5')"),
@@ -143,10 +143,10 @@ export function registerOfferTools(server: McpServer): void {
   );
 
   /**
-   * bankers_fill_offer — Accept and fill an existing offer
+   * brokers_fill_offer — Accept and fill an existing offer
    */
   server.tool(
-    "bankers_fill_offer",
+    "brokers_fill_offer",
     "Accept and fill an existing OTC offer. You provide tokenB and receive tokenA.",
     {
       offerId: z.union([z.string(), z.number()]).describe("The offer ID to fill"),
@@ -200,10 +200,10 @@ export function registerOfferTools(server: McpServer): void {
   );
 
   /**
-   * bankers_counter_offer — Submit a counter-proposal for an existing offer
+   * brokers_counter_offer — Submit a counter-proposal for an existing offer
    */
   server.tool(
-    "bankers_counter_offer",
+    "brokers_counter_offer",
     "Submit a counter-proposal for an existing offer with a different tokenB amount.",
     {
       offerId: z.union([z.string(), z.number()]).describe("The offer ID to counter"),
@@ -249,10 +249,10 @@ export function registerOfferTools(server: McpServer): void {
   );
 
   /**
-   * bankers_cancel_offer — Cancel your own offer
+   * brokers_cancel_offer — Cancel your own offer
    */
   server.tool(
-    "bankers_cancel_offer",
+    "brokers_cancel_offer",
     "Cancel an offer you created. Only the original maker can cancel.",
     {
       offerId: z.union([z.string(), z.number()]).describe("The offer ID to cancel"),

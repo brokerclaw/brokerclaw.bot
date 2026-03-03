@@ -1,5 +1,5 @@
 {
-  "name": "@bankers-bot/sdk",
+  "name": "@brokers-bot/sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for the BROKER OTC protocol on Base",
   "type": "module",

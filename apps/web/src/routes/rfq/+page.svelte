@@ -8,7 +8,7 @@
 	let expiry = $state('24');
 	let submitting = $state(false);
 
-	const tokens = ['USDC', 'WETH', 'DAI', 'Bankers Bot'];
+	const tokens = ['USDC', 'WETH', 'DAI', 'Brokers Bot'];
 
 	async function handleSubmit() {
 		if (!$wallet.connected) {
@@ -23,7 +23,7 @@
 </script>
 
 <svelte:head>
-	<title>RFQ — Bankers Bot</title>
+	<title>RFQ — Brokers Bot</title>
 </svelte:head>
 
 <div class="space-y-8 animate-fade-in">

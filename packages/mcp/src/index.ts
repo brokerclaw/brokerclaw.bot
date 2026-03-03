@@ -14,10 +14,10 @@ import { registerDealsResource } from "./resources/deals.js";
 import { registerLeaderboardResource } from "./resources/leaderboard.js";
 
 /**
- * Bankers Bot MCP Server
+ * Brokers Bot MCP Server
  *
  * Provides AI agents with tools and resources to interact with the
- * Bankers Bot OTC trading protocol on Base.
+ * Brokers Bot OTC trading protocol on Base.
  *
  * Environment variables:
  *   BROKER_PRIVATE_KEY  — Hex private key for signing transactions (required for write ops)
@@ -26,7 +26,7 @@ import { registerLeaderboardResource } from "./resources/leaderboard.js";
  */
 async function main(): Promise<void> {
   const server = new McpServer({
-    name: "bankers-bot-protocol",
+    name: "brokers-bot-protocol",
     version: "0.1.0",
   });
 
@@ -47,10 +47,10 @@ async function main(): Promise<void> {
   await server.connect(transport);
 
   // Log to stderr (stdout is reserved for MCP protocol messages)
-  console.error("Bankers Bot MCP server started (stdio transport)");
+  console.error("Brokers Bot MCP server started (stdio transport)");
 }
 
 main().catch((error) => {
-  console.error("Fatal error starting Bankers Bot MCP server:", error);
+  console.error("Fatal error starting Brokers Bot MCP server:", error);
   process.exit(1);
 });

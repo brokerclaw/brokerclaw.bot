@@ -14,7 +14,7 @@ import {
 } from "viem";
 import { foundry } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { BrokerClient, type BrokerAddresses } from "@bankers-bot/sdk";
+import { BrokerClient, type BrokerAddresses } from "@brokers-bot/sdk";
 import { TEST_ACCOUNTS, TOKEN_CONFIG, FEE_CONFIG } from "./fixtures.js";
 
 // ── Minimal Solidity bytecodes compiled to EVM ─────────────────

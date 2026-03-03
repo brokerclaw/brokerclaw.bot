@@ -43,10 +43,10 @@ const FEE_TIERS = [500, 3000, 10000] as const;
 
 export function registerMarketTools(server: McpServer): void {
   /**
-   * bankers_market_price — Get AMM reference price for a token pair
+   * brokers_market_price — Get AMM reference price for a token pair
    */
   server.tool(
-    "bankers_market_price",
+    "brokers_market_price",
     "Get the current AMM (Uniswap V3) reference price for a token pair on Base. Useful for evaluating OTC offers.",
     {
       tokenA: z.string().describe("Input token (address or symbol, e.g., 'WETH')"),
@@ -130,11 +130,11 @@ export function registerMarketTools(server: McpServer): void {
   );
 
   /**
-   * bankers_stats — Get protocol-level statistics
+   * brokers_stats — Get protocol-level statistics
    */
   server.tool(
-    "bankers_stats",
-    "Get overall Bankers Bot protocol statistics: total volume, deal count, and top agents.",
+    "brokers_stats",
+    "Get overall Brokers Bot protocol statistics: total volume, deal count, and top agents.",
     {},
     async () => {
       const client = getPublicClient();
@@ -176,7 +176,7 @@ export function registerMarketTools(server: McpServer): void {
             {
               type: "text",
               text: [
-                "📊 Bankers Bot Stats",
+                "📊 Brokers Bot Stats",
                 "═══════════════════════",
                 `  Total Volume: ${formatTokenAmount(totalVolume)} (raw units)`,
                 `  Total Deals: ${totalDeals}`,

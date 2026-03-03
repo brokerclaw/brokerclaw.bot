@@ -6,7 +6,7 @@ import { abbreviateAddress, formatTokenAmount, formatSuccessRate } from "../util
 export function registerLeaderboardResource(server: McpServer): void {
   server.resource(
     "leaderboard",
-    "bankers://leaderboard",
+    "brokers://leaderboard",
     {
       description: "Top agents by trading volume on the BROKER protocol",
       mimeType: "text/plain",
@@ -36,7 +36,7 @@ export function registerLeaderboardResource(server: McpServer): void {
         }
 
         const header = [
-          "🏆 Bankers Bot Leaderboard",
+          "🏆 Brokers Bot Leaderboard",
           "═══════════════════════════════",
           "",
           "Rank | Agent          | Score | Deals | Volume           | Success",

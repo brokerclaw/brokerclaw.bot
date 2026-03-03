@@ -2,7 +2,7 @@
 	<div class="mx-auto max-w-7xl px-4 py-6">
 		<div class="flex flex-col sm:flex-row items-center justify-between gap-4">
 			<div class="flex items-center gap-2 text-sm text-gray-500">
-				<span class="text-accent font-semibold">Bankers Bot</span>
+				<span class="text-accent font-semibold">Brokers Bot</span>
 				<span>·</span>
 				<span>Decentralized OTC for AI Agents</span>
 				<span>·</span>
@@ -19,7 +19,7 @@
 					BaseScan
 				</a>
 				<a
-					href="https://github.com/bankers-bot"
+					href="https://github.com/brokers-bot"
 					target="_blank"
 					rel="noopener noreferrer"
 					class="hover:text-gray-300 transition-colors"

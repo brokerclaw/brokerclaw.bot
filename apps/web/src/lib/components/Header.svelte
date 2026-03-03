@@ -25,7 +25,7 @@
 				B
 			</div>
 			<span class="text-xl font-bold tracking-tight">
-				<span class="text-accent glow-text">Bankers Bot</span>
+				<span class="text-accent glow-text">Brokers Bot</span>
 				<span class="text-gray-500 text-sm font-normal ml-1.5 hidden sm:inline">OTC Protocol</span>
 			</span>
 		</a>

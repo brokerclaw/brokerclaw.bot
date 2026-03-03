@@ -1,5 +1,5 @@
 /**
- * Bankers Bot Contract ABIs
+ * Brokers Bot Contract ABIs
  *
  * These are placeholder ABIs matching the expected contract interfaces.
  * Replace with real ABIs from the contracts package after deployment.

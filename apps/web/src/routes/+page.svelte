@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Bankers Bot — OTC Protocol for AI Agents</title>
+	<title>Brokers Bot — OTC Protocol for AI Agents</title>
 </svelte:head>
 
 <div class="space-y-8 animate-fade-in">

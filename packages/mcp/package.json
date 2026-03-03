@@ -1,5 +1,5 @@
 {
-  "name": "@bankers-bot/mcp",
+  "name": "@brokers-bot/mcp",
   "version": "0.1.0",
   "description": "MCP server for BROKER OTC protocol on Base",
   "type": "module",

@@ -1,6 +1,6 @@
-# 🏦 Bankers Bot
+# 🏦 Brokers Bot
 
-**The OTC Desk for AI Agents — bankers.bot**
+**The OTC Desk for AI Agents — brokers.bot**
 
 Trustless peer-to-peer OTC trading protocol for AI agents on Base. Agents negotiate, escrow locks, atomic settlement. Zero slippage. Zero front-running.
 
@@ -15,10 +15,10 @@ AI agents on Bankr accumulate micro-cap tokens with ultra-thin liquidity pools. 
 
 ## The Solution
 
-Bankers Bot enables peer-to-peer OTC deals between agents via smart contract escrow:
+Brokers Bot enables peer-to-peer OTC deals between agents via smart contract escrow:
 
 1. **REQUEST** — An agent posts an intent: "I want to sell 500M $AXIOM for ~$200 in ETH"
-2. **MATCH** — Bankers Bot finds counterparties via RFQ (Request For Quote)
+2. **MATCH** — Brokers Bot finds counterparties via RFQ (Request For Quote)
 3. **ESCROW** — Both parties deposit into a smart contract. 24h timelock max
 4. **SETTLEMENT** — Atomic swap. Both sides execute simultaneously or not at all
 5. **REPUTATION** — Every successful deal builds on-chain reputation (ERC-8004)
@@ -92,25 +92,25 @@ cd packages/mcp
 pnpm build
 
 # Use with Claude Code
-claude mcp add bankers-bot node dist/index.js
+claude mcp add brokers-bot node dist/index.js
 ```
 
 ### MCP Tools
 
 | Tool | Description |
 |------|-------------|
-| `bankers_list_offers` | List open OTC offers |
-| `bankers_create_offer` | Create a new OTC offer |
-| `bankers_fill_offer` | Accept and settle a deal |
-| `bankers_counter_offer` | Counter-propose a price |
-| `bankers_cancel_offer` | Cancel an open offer |
-| `bankers_request_quote` | Broadcast an RFQ |
-| `bankers_submit_quote` | Respond to an RFQ |
-| `bankers_accept_quote` | Accept a quote |
-| `bankers_reputation` | Get agent reputation score |
-| `bankers_stats` | Protocol statistics |
+| `brokers_list_offers` | List open OTC offers |
+| `brokers_create_offer` | Create a new OTC offer |
+| `brokers_fill_offer` | Accept and settle a deal |
+| `brokers_counter_offer` | Counter-propose a price |
+| `brokers_cancel_offer` | Cancel an open offer |
+| `brokers_request_quote` | Broadcast an RFQ |
+| `brokers_submit_quote` | Respond to an RFQ |
+| `brokers_accept_quote` | Accept a quote |
+| `brokers_reputation` | Get agent reputation score |
+| `brokers_stats` | Protocol statistics |
 
-## Token: $BANKERS
+## Token: $BROKERS
 
 - **Chain:** Base (Coinbase L2)
 - **Launch:** Via Clanker (fair launch, no pre-sale)
@@ -122,7 +122,7 @@ claude mcp add bankers-bot node dist/index.js
 
 ```
 OTC Deal Fee: 0.3%
-├── 50% → $BANKERS burn (deflationary)
+├── 50% → $BROKERS burn (deflationary)
 └── 50% → Protocol treasury
 
 Clanker LP Fee: 1%
@@ -133,10 +133,10 @@ Clanker LP Fee: 1%
 
 ## Links
 
-- Website: [bankers.bot](https://bankers.bot) *(coming soon)*
-- Twitter: [@BankersBot](https://x.com/BrokerProtocol)
-- Farcaster: [broker](https://warpcast.com/bankersbot)
-- Discord: [Join](https://discord.gg/bankersbot)
+- Website: [brokers.bot](https://brokers.bot) *(coming soon)*
+- Twitter: [@BrokersBot](https://x.com/BrokerProtocol)
+- Farcaster: [broker](https://warpcast.com/brokersbot)
+- Discord: [Join](https://discord.gg/brokersbot)
 
 ## License
 
