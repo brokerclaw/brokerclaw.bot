@@ -54,6 +54,35 @@
 		</div>
 	</div>
 
+	<!-- Contract Addresses -->
+	<section class="relative">
+		<div class="max-w-3xl mx-auto">
+			<div class="card p-6 md:p-8 text-center">
+				<h2 class="font-display text-xl font-bold uppercase tracking-wider mb-4">
+					<span class="text-neon-orange">$BROKR Token</span>
+				</h2>
+				<p class="text-gray-400 text-sm mb-4">Protocol token on Base</p>
+				<div class="inline-flex items-center gap-2 bg-base-900/80 border border-base-600/50 rounded-lg px-4 py-2.5">
+					<span class="font-mono text-sm text-neon-cyan break-all">0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3</span>
+					<button
+						class="text-gray-500 hover:text-neon-pink transition-colors flex-shrink-0"
+						onclick={() => navigator.clipboard.writeText('0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3')}
+						title="Copy address"
+					>
+						📋
+					</button>
+				</div>
+				<div class="flex items-center justify-center gap-4 mt-4 text-sm font-display uppercase tracking-wider">
+					<a href="https://basescan.org/token/0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-neon-cyan transition-colors">BaseScan</a>
+					<span class="text-base-600">·</span>
+					<a href="https://www.bankr.bot/launches/0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-neon-cyan transition-colors">Bankr</a>
+					<span class="text-base-600">·</span>
+					<a href="https://dexscreener.com/base/0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-neon-cyan transition-colors">DexScreener</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
 	<!-- The Problem -->
 	<section class="relative">
 		<div class="max-w-3xl mx-auto">
@@ -183,50 +212,6 @@
 	</section>
 
 	<hr class="neon-hr max-w-md mx-auto" />
-
-	<!-- Token -->
-	<section class="relative">
-		<div class="max-w-3xl mx-auto">
-			<div class="card p-6 md:p-8 text-center">
-				<h2 class="font-display text-xl font-bold uppercase tracking-wider mb-4">
-					<span class="text-neon-orange">$BROKR Token</span>
-				</h2>
-				<p class="text-gray-400 text-sm mb-4">Protocol token on Base</p>
-				<div class="inline-flex items-center gap-2 bg-base-900/80 border border-base-600/50 rounded-lg px-4 py-2.5">
-					<span class="font-mono text-sm text-neon-cyan break-all">0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3</span>
-					<button
-						class="text-gray-500 hover:text-neon-pink transition-colors flex-shrink-0"
-						onclick={() => navigator.clipboard.writeText('0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3')}
-						title="Copy address"
-					>
-						📋
-					</button>
-				</div>
-				<div class="flex items-center justify-center gap-4 mt-4 text-sm font-display uppercase tracking-wider">
-					<a
-						href="https://basescan.org/token/0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="text-gray-500 hover:text-neon-cyan transition-colors"
-					>BaseScan</a>
-					<span class="text-base-600">·</span>
-					<a
-						href="https://www.bankr.bot/launches/0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="text-gray-500 hover:text-neon-cyan transition-colors"
-					>Bankr</a>
-					<span class="text-base-600">·</span>
-					<a
-						href="https://dexscreener.com/base/0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="text-gray-500 hover:text-neon-cyan transition-colors"
-					>DexScreener</a>
-				</div>
-			</div>
-		</div>
-	</section>
 
 	<!-- Stats -->
 	<section>
