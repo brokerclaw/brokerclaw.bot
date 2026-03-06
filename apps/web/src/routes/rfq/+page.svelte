@@ -5,6 +5,7 @@
 	import { ERC20_ABI, RFQ_ABI } from '$lib/contracts/abi';
 	import { ADDRESSES } from '$lib/contracts/addresses';
 	import { get } from 'svelte/store';
+	import { parseUnits } from 'viem';
 
 	let tokenWantAddress = $state('');
 	let tokenOfferAddress = $state('');
@@ -181,8 +182,7 @@
 		}
 	}
 
-	// Need parseUnits
-	import { parseUnits } from 'viem';
+
 </script>
 
 <svelte:head>
