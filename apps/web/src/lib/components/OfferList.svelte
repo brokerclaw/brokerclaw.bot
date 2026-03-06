@@ -15,7 +15,7 @@
 		if ($offers.length === 0) fetchOffers();
 	});
 
-	let statusFilter = $state('all');
+	let statusFilter = $state(showFilters ? 'open' : 'all');
 	let fillingId = $state('');
 	let fillStatus = $state('');
 	let fillError = $state('');
