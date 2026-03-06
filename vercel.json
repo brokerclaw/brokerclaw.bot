@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "svelte",
+  "installCommand": "npm i -g pnpm@latest && pnpm install",
+  "buildCommand": "pnpm --filter @brokers-bot/web build",
+  "outputDirectory": "apps/web/build"
+}
