@@ -1,6 +1,9 @@
 <script lang="ts">
 	import '../app.css';
+	import { inject } from '@vercel/analytics';
 	import { page } from '$app/stores';
+
+	inject();
 
 	const nav = [
 		{ href: '/', label: 'Overview' },
