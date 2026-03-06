@@ -1,0 +1,6 @@
+{
+  "framework": "svelte",
+  "installCommand": "corepack enable && pnpm install",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "build"
+}
