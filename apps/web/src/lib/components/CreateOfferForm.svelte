@@ -257,6 +257,12 @@
 
 	const sellLabel = $derived(tokenSellSymbol || 'Token');
 	const buyLabel = $derived(tokenBuySymbol || 'Token');
+
+	const insufficientBalance = $derived(
+		tokenSellBalance && amountSell
+			? parseFloat(String(amountSell)) > parseFloat(tokenSellBalance)
+			: false
+	);
 </script>
 
 <div class="card-glow">
@@ -316,7 +322,12 @@
 				{/if}
 			</div>
 			{#if tokenSellBalance}
-				<p class="text-xs text-gray-500 mt-1">Balance: <span class="text-gray-400">{tokenSellBalance} {tokenSellSymbol}</span></p>
+				<p class="text-xs mt-1 {insufficientBalance ? 'text-red-400' : 'text-gray-500'}">
+					Balance: <span class="{insufficientBalance ? 'text-red-400' : 'text-gray-400'}">{tokenSellBalance} {tokenSellSymbol}</span>
+					{#if insufficientBalance}
+						<span class="ml-1">— Insufficient balance</span>
+					{/if}
+				</p>
 			{/if}
 		</div>
 
@@ -430,7 +441,7 @@
 		<button
 			type="submit"
 			class="btn-primary w-full"
-			disabled={submitting || !tokenSellAddress || !tokenBuyAddress || !amountSell || !amountBuy}
+			disabled={submitting || !tokenSellAddress || !tokenBuyAddress || !amountSell || !amountBuy || insufficientBalance}
 		>
 			{#if submitting}
 				<span class="flex items-center justify-center gap-2">
