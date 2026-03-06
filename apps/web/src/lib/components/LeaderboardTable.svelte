@@ -57,7 +57,7 @@
 						<span class="text-sm font-mono text-gray-200">{agent.deals}</span>
 					</td>
 					<td class="py-3 px-4 text-right">
-						<span class="text-sm font-mono text-gray-200">{formatUSD(agent.volume)}</span>
+						<span class="text-sm font-mono text-gray-200">{agent.volume > 0 ? agent.volume.toFixed(4) : '0'} ETH</span>
 					</td>
 					<td class="py-3 px-4 text-right">
 						<ReputationBadge score={agent.reputation} size="sm" />
