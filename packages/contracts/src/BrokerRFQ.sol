@@ -21,6 +21,9 @@ contract BrokerRFQ is IBrokerRFQ, ReentrancyGuard, Ownable {
     /// @notice Sentinel address representing native ETH
     address public constant ETH_SENTINEL = address(0);
 
+    /// @notice Maximum quotes per request (prevents DoS via unbounded loops)
+    uint256 public constant MAX_QUOTES_PER_REQUEST = 50;
+
     // ─── State ───────────────────────────────────────────────────────────────────
 
     /// @notice The escrow contract used for settlement
@@ -84,6 +87,7 @@ contract BrokerRFQ is IBrokerRFQ, ReentrancyGuard, Ownable {
         require(amountB > 0, "BrokerRFQ: zero amountB");
         require(quoteExpiry > block.timestamp, "BrokerRFQ: quote expired");
         require(msg.sender != request.requester, "BrokerRFQ: self-quote");
+        require(_requestQuotes[requestId].length < MAX_QUOTES_PER_REQUEST, "BrokerRFQ: max quotes reached");
 
         quoteId = ++quoteCount;
         _quotes[quoteId] = Quote({

@@ -342,4 +342,26 @@ contract BrokerRFQTest is Test {
         vm.expectRevert("BrokerRFQ: zero escrow");
         rfq.setEscrow(address(0));
     }
+
+    // ─── H-2: Quote cap prevents DoS ────────────────────────────────────────────
+
+    function test_submitQuote_revert_maxQuotes() public {
+        uint256 expiry = block.timestamp + 1 hours;
+
+        vm.prank(requester);
+        uint256 requestId = rfq.requestQuote(address(tokenA), AMOUNT_A, address(tokenB), expiry);
+
+        // Submit MAX_QUOTES_PER_REQUEST (50) quotes
+        for (uint256 i = 0; i < 50; i++) {
+            address q = makeAddr(string(abi.encodePacked("quoter", i)));
+            vm.prank(q);
+            rfq.submitQuote(requestId, AMOUNT_B + i, expiry);
+        }
+
+        // 51st quote should revert
+        address extraQuoter = makeAddr("extraQuoter");
+        vm.prank(extraQuoter);
+        vm.expectRevert("BrokerRFQ: max quotes reached");
+        rfq.submitQuote(requestId, AMOUNT_B, expiry);
+    }
 }

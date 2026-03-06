@@ -95,11 +95,15 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
         require(amountA > 0, "BrokerEscrow: zero amountA");
         require(amountB > 0, "BrokerEscrow: zero amountB");
         require(expiry > block.timestamp, "BrokerEscrow: expired");
-        require(tokenA != tokenB || (tokenA == ETH_SENTINEL && tokenB == ETH_SENTINEL), "BrokerEscrow: same tokens");
+        // H-3: Disallow same-token offers entirely (ETH sentinel resolves to WETH on both sides)
+        require(tokenA != tokenB, "BrokerEscrow: same tokens");
 
         // Handle tokenA deposit (ETH → WETH or ERC-20 transfer)
-        address actualTokenA = _depositToken(tokenA, amountA);
+        (address actualTokenA, uint256 receivedA) = _depositToken(tokenA, amountA);
         address actualTokenB = tokenB == ETH_SENTINEL ? address(weth) : tokenB;
+
+        // H-3: Also catch ETH↔WETH (both resolve to WETH after sentinel handling)
+        require(actualTokenA != actualTokenB, "BrokerEscrow: same tokens");
 
         offerId = ++offerCount;
         _offers[offerId] = Offer({
@@ -107,14 +111,14 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
             taker: address(0),
             tokenA: actualTokenA,
             tokenB: actualTokenB,
-            amountA: amountA,
+            amountA: receivedA,
             amountB: amountB,
             expiry: expiry,
             status: OfferStatus.Open,
             originalOfferId: 0
         });
 
-        emit OfferCreated(offerId, msg.sender, actualTokenA, actualTokenB, amountA, amountB, expiry);
+        emit OfferCreated(offerId, msg.sender, actualTokenA, actualTokenB, receivedA, amountB, expiry);
     }
 
     /// @inheritdoc IBrokerEscrow
@@ -194,7 +198,7 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
 
         // Original offer stays Open — still fillable by anyone at the original price.
         // Counter-party must deposit tokenB (skin in the game).
-        address actualTokenB = _depositToken(offer.tokenB, newAmountB);
+        (address actualTokenB, uint256 receivedB) = _depositToken(offer.tokenB, newAmountB);
 
         // Create a reversed offer: counter-party offers tokenB, wants tokenA
         uint256 counterOfferId = ++offerCount;
@@ -203,15 +207,15 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
             taker: address(0),
             tokenA: actualTokenB,
             tokenB: offer.tokenA,
-            amountA: newAmountB,
+            amountA: receivedB,
             amountB: offer.amountA,
             expiry: offer.expiry,
             status: OfferStatus.Open,
             originalOfferId: offerId
         });
 
-        emit CounterOfferCreated(offerId, counterOfferId, msg.sender, newAmountB);
-        emit OfferCreated(counterOfferId, msg.sender, actualTokenB, offer.tokenA, newAmountB, offer.amountA, offer.expiry);
+        emit CounterOfferCreated(offerId, counterOfferId, msg.sender, receivedB);
+        emit OfferCreated(counterOfferId, msg.sender, actualTokenB, offer.tokenA, receivedB, offer.amountA, offer.expiry);
     }
 
     /// @inheritdoc IBrokerEscrow
@@ -232,8 +236,11 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
         require(expiry > block.timestamp, "BrokerEscrow: expired");
 
         // Handle tokenA deposit (ETH → WETH or ERC-20 transfer from msg.sender i.e. the authorized caller)
-        address actualTokenA = _depositToken(tokenA, amountA);
+        (address actualTokenA, uint256 receivedA) = _depositToken(tokenA, amountA);
         address actualTokenB = tokenB == ETH_SENTINEL ? address(weth) : tokenB;
+
+        // M-1: Validate tokenA != tokenB (same check as createOffer)
+        require(actualTokenA != actualTokenB, "BrokerEscrow: same tokens");
 
         offerId = ++offerCount;
         _offers[offerId] = Offer({
@@ -241,14 +248,14 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
             taker: address(0),
             tokenA: actualTokenA,
             tokenB: actualTokenB,
-            amountA: amountA,
+            amountA: receivedA,
             amountB: amountB,
             expiry: expiry,
             status: OfferStatus.Open,
             originalOfferId: 0
         });
 
-        emit OfferCreated(offerId, onBehalfOf, actualTokenA, actualTokenB, amountA, amountB, expiry);
+        emit OfferCreated(offerId, onBehalfOf, actualTokenA, actualTokenB, receivedA, amountB, expiry);
     }
 
     /// @inheritdoc IBrokerEscrow
@@ -297,17 +304,23 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
     // ─── Internal Functions ──────────────────────────────────────────────────────
 
     /// @dev Deposits a token into escrow. Wraps ETH to WETH if ETH sentinel is used.
+    ///      For ERC-20s, measures actual received balance to support fee-on-transfer tokens.
     /// @param token The token address (address(0) for ETH)
     /// @param amount The amount to deposit
     /// @return actualToken The actual token address held in escrow (WETH if ETH was sent)
-    function _depositToken(address token, uint256 amount) internal returns (address actualToken) {
+    /// @return received The actual amount received (may differ from amount for fee-on-transfer tokens)
+    function _depositToken(address token, uint256 amount) internal returns (address actualToken, uint256 received) {
         if (token == ETH_SENTINEL) {
             require(msg.value == amount, "BrokerEscrow: wrong ETH amount");
             weth.deposit{ value: amount }();
             actualToken = address(weth);
+            received = amount;
         } else {
             require(msg.value == 0, "BrokerEscrow: unexpected ETH");
+            uint256 balBefore = IERC20(token).balanceOf(address(this));
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+            received = IERC20(token).balanceOf(address(this)) - balBefore;
+            require(received > 0, "BrokerEscrow: zero received");
             actualToken = token;
         }
     }

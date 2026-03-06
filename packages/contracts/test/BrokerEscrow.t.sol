@@ -5,7 +5,7 @@ import { Test, console2 } from "forge-std/Test.sol";
 import { BrokerEscrow } from "../src/BrokerEscrow.sol";
 import { BrokerReputation } from "../src/BrokerReputation.sol";
 import { IBrokerEscrow } from "../src/interfaces/IBrokerEscrow.sol";
-import { MockERC20, MockWETH } from "./helpers/MockERC20.sol";
+import { MockERC20, MockFeeToken, MockWETH } from "./helpers/MockERC20.sol";
 
 contract BrokerEscrowTest is Test {
     BrokerEscrow public escrow;
@@ -465,6 +465,60 @@ contract BrokerEscrowTest is Test {
         escrow.cancelOffer(offerId);
 
         assertEq(reputation.getAgentStats(maker).cancelledDeals, 1);
+    }
+
+    // ─── H-1: Fee-on-transfer token accounting ────────────────────────────────────
+
+    function test_feeOnTransfer_correctAccounting() public {
+        MockFeeToken fot = new MockFeeToken("FOT", "FOT", 18);
+        fot.mint(maker, 1_000 ether);
+        vm.prank(maker);
+        fot.approve(address(escrow), type(uint256).max);
+
+        vm.prank(maker);
+        uint256 offerId = escrow.createOffer(address(fot), 100 ether, address(tokenB), AMOUNT_B, block.timestamp + 1 hours);
+
+        // Stored amountA should be 98 ether (100 - 2% fee)
+        IBrokerEscrow.Offer memory offer = escrow.getOffer(offerId);
+        assertEq(offer.amountA, 98 ether);
+        assertEq(fot.balanceOf(address(escrow)), 98 ether);
+    }
+
+    function test_feeOnTransfer_cancelReturnsCorrectAmount() public {
+        MockFeeToken fot = new MockFeeToken("FOT", "FOT", 18);
+        fot.mint(maker, 1_000 ether);
+        vm.prank(maker);
+        fot.approve(address(escrow), type(uint256).max);
+
+        vm.prank(maker);
+        uint256 offerId = escrow.createOffer(address(fot), 100 ether, address(tokenB), AMOUNT_B, block.timestamp + 1 hours);
+
+        // Cancel should work — only transfers stored 98, not original 100
+        vm.prank(maker);
+        escrow.cancelOffer(offerId);
+        assertEq(fot.balanceOf(address(escrow)), 0);
+    }
+
+    // ─── H-3: Same-token rejection ──────────────────────────────────────────────
+
+    function test_createOffer_revert_sameTokens() public {
+        vm.prank(maker);
+        vm.expectRevert("BrokerEscrow: same tokens");
+        escrow.createOffer(address(tokenA), AMOUNT_A, address(tokenA), AMOUNT_B, block.timestamp + 1 hours);
+    }
+
+    function test_createOffer_revert_ethForEth() public {
+        // Both ETH sentinels resolve to WETH — should be blocked
+        vm.prank(maker);
+        vm.expectRevert("BrokerEscrow: same tokens");
+        escrow.createOffer{ value: 1 ether }(address(0), 1 ether, address(0), 1 ether, block.timestamp + 1 hours);
+    }
+
+    function test_createOffer_revert_ethForWeth() public {
+        // ETH sentinel for tokenA (resolves to WETH) + WETH for tokenB — same tokens
+        vm.prank(maker);
+        vm.expectRevert("BrokerEscrow: same tokens");
+        escrow.createOffer{ value: 1 ether }(address(0), 1 ether, address(weth), 1 ether, block.timestamp + 1 hours);
     }
 
     // ─── Fuzz Tests ──────────────────────────────────────────────────────────────
