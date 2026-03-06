@@ -159,8 +159,24 @@
 
 		try {
 			const isETH = tokenSellAddress.toLowerCase() === ETH_SENTINEL;
-			const amountAWei = parseUnits(String(amountSell), tokenSellDecimals);
-			const amountBWei = parseUnits(String(amountBuy), tokenBuyDecimals);
+
+			// Always fetch decimals fresh before submitting
+			txStatus = 'Resolving token decimals...';
+			const [decA, decB] = await Promise.all([
+				isETH ? Promise.resolve(18) : publicClient.readContract({
+					address: tokenSellAddress as `0x${string}`,
+					abi: ERC20_ABI,
+					functionName: 'decimals'
+				}).then(Number).catch(() => 18),
+				tokenBuyAddress.toLowerCase() === ETH_SENTINEL ? Promise.resolve(18) : publicClient.readContract({
+					address: tokenBuyAddress as `0x${string}`,
+					abi: ERC20_ABI,
+					functionName: 'decimals'
+				}).then(Number).catch(() => 18)
+			]);
+
+			const amountAWei = parseUnits(String(amountSell), decA);
+			const amountBWei = parseUnits(String(amountBuy), decB);
 			const expiryTimestamp = BigInt(Math.floor(Date.now() / 1000) + parseInt(expiry) * 3600);
 
 			// Step 1: Approve ERC-20 (skip for ETH)
