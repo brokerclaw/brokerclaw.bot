@@ -30,6 +30,19 @@ export const ESCROW_ABI = [
 		type: 'function'
 	},
 	{
+		inputs: [
+			{ name: 'tokenA', type: 'address' },
+			{ name: 'amountA', type: 'uint256' },
+			{ name: 'tokenB', type: 'address' },
+			{ name: 'amountB', type: 'uint256' },
+			{ name: 'expiry', type: 'uint256' }
+		],
+		name: 'createOffer',
+		outputs: [{ name: 'offerId', type: 'uint256' }],
+		stateMutability: 'payable',
+		type: 'function'
+	},
+	{
 		inputs: [],
 		name: 'feeBps',
 		outputs: [{ name: '', type: 'uint256' }],
@@ -150,6 +163,26 @@ export const ERC20_ABI = [
 		inputs: [],
 		name: 'symbol',
 		outputs: [{ name: '', type: 'string' }],
+		stateMutability: 'view',
+		type: 'function'
+	},
+	{
+		inputs: [
+			{ name: 'spender', type: 'address' },
+			{ name: 'amount', type: 'uint256' }
+		],
+		name: 'approve',
+		outputs: [{ name: '', type: 'bool' }],
+		stateMutability: 'nonpayable',
+		type: 'function'
+	},
+	{
+		inputs: [
+			{ name: 'owner', type: 'address' },
+			{ name: 'spender', type: 'address' }
+		],
+		name: 'allowance',
+		outputs: [{ name: '', type: 'uint256' }],
 		stateMutability: 'view',
 		type: 'function'
 	}

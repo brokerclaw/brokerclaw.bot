@@ -1,8 +1,13 @@
 <script lang="ts">
-	import { wallet } from '$lib/stores/wallet';
+	import { wallet, walletClient } from '$lib/stores/wallet';
 	import { connectWallet } from '$lib/stores/wallet';
 	import { publicClient } from '$lib/contracts/config';
-	import { ERC20_ABI } from '$lib/contracts/abi';
+	import { ERC20_ABI, ESCROW_ABI } from '$lib/contracts/abi';
+	import { ADDRESSES } from '$lib/contracts/addresses';
+	import { parseUnits } from 'viem';
+	import { get } from 'svelte/store';
+
+	const ETH_SENTINEL = '0x0000000000000000000000000000000000000000';
 
 	let tokenSellAddress = $state('');
 	let tokenBuyAddress = $state('');
@@ -10,6 +15,9 @@
 	let amountBuy = $state('');
 	let expiry = $state('24');
 	let submitting = $state(false);
+	let txStatus = $state('');
+	let txHash = $state('');
+	let txError = $state('');
 
 	let tokenSellSymbol = $state('');
 	let tokenBuySymbol = $state('');
@@ -137,12 +145,92 @@
 			await connectWallet();
 			return;
 		}
+
+		const client = get(walletClient);
+		if (!client) {
+			txError = 'Wallet client not available';
+			return;
+		}
+
 		submitting = true;
-		// Contract interaction would go here
-		await new Promise((r) => setTimeout(r, 1500));
-		submitting = false;
-		amountSell = '';
-		amountBuy = '';
+		txStatus = '';
+		txHash = '';
+		txError = '';
+
+		try {
+			const isETH = tokenSellAddress.toLowerCase() === ETH_SENTINEL;
+			const amountAWei = parseUnits(amountSell, tokenSellDecimals);
+			const amountBWei = parseUnits(amountBuy, tokenBuyDecimals);
+			const expiryTimestamp = BigInt(Math.floor(Date.now() / 1000) + parseInt(expiry) * 3600);
+
+			// Step 1: Approve ERC-20 (skip for ETH)
+			if (!isETH) {
+				txStatus = 'Checking allowance...';
+				const currentAllowance = await publicClient.readContract({
+					address: tokenSellAddress as `0x${string}`,
+					abi: ERC20_ABI,
+					functionName: 'allowance',
+					args: [$wallet.address as `0x${string}`, ADDRESSES.ESCROW]
+				});
+
+				if (currentAllowance < amountAWei) {
+					txStatus = 'Approving token transfer...';
+					const approveTx = await client.writeContract({
+						address: tokenSellAddress as `0x${string}`,
+						abi: ERC20_ABI,
+						functionName: 'approve',
+						args: [ADDRESSES.ESCROW, amountAWei],
+						chain: null,
+						account: $wallet.address as `0x${string}`
+					});
+					txStatus = 'Waiting for approval confirmation...';
+					await publicClient.waitForTransactionReceipt({ hash: approveTx });
+				}
+			}
+
+			// Step 2: Create the offer
+			txStatus = 'Creating offer...';
+			const hash = await client.writeContract({
+				address: ADDRESSES.ESCROW,
+				abi: ESCROW_ABI,
+				functionName: 'createOffer',
+				args: [
+					tokenSellAddress as `0x${string}`,
+					amountAWei,
+					tokenBuyAddress as `0x${string}`,
+					amountBWei,
+					expiryTimestamp
+				],
+				value: isETH ? amountAWei : 0n,
+				chain: null,
+				account: $wallet.address as `0x${string}`
+			});
+
+			txHash = hash;
+			txStatus = 'Waiting for confirmation...';
+			await publicClient.waitForTransactionReceipt({ hash });
+
+			txStatus = 'Offer created!';
+			amountSell = '';
+			amountBuy = '';
+
+			// Refresh balances
+			if (tokenSellAddress) {
+				const { balance } = await fetchBalance(tokenSellAddress);
+				tokenSellBalance = balance;
+			}
+		} catch (err: any) {
+			console.error('Create offer error:', err);
+			if (err.message?.includes('User rejected') || err.message?.includes('User denied')) {
+				txError = 'Transaction rejected by user';
+			} else if (err.message?.includes('insufficient funds')) {
+				txError = 'Insufficient funds for gas + value';
+			} else {
+				txError = err.shortMessage || err.message || 'Transaction failed';
+			}
+		} finally {
+			submitting = false;
+		}
 	}
 
 	const rate = $derived(
@@ -298,6 +386,30 @@
 				<option value="168">7 days</option>
 			</select>
 		</div>
+
+		{#if txStatus}
+			<div class="text-xs text-neon-cyan text-center flex items-center justify-center gap-2">
+				{#if submitting}
+					<svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+					</svg>
+				{/if}
+				{txStatus}
+			</div>
+		{/if}
+
+		{#if txHash}
+			<div class="text-xs text-center">
+				<a href="https://basescan.org/tx/{txHash}" target="_blank" class="text-neon-cyan hover:text-neon-pink transition-colors font-mono">
+					View on BaseScan ↗
+				</a>
+			</div>
+		{/if}
+
+		{#if txError}
+			<div class="text-xs text-red-400 text-center">{txError}</div>
+		{/if}
 
 		<button
 			type="submit"
