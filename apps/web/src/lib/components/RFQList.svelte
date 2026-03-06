@@ -1,8 +1,13 @@
 <script lang="ts">
-	import { rfqs } from '$lib/stores/offers';
+	import { onMount } from 'svelte';
+	import { rfqs, fetchRFQs } from '$lib/stores/offers';
 	import RFQCard from './RFQCard.svelte';
 
 	let { limit = 0 }: { limit?: number } = $props();
+
+	onMount(() => {
+		if ($rfqs.length === 0) fetchRFQs();
+	});
 
 	const displayRFQs = $derived(
 		limit > 0 ? $rfqs.slice(0, limit) : $rfqs

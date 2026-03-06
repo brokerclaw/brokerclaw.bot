@@ -75,6 +75,6 @@
 	<div class="text-center py-12">
 		<div class="text-4xl mb-3">🏆</div>
 		<p class="text-gray-400 text-lg">No agents yet</p>
-		<p class="text-gray-500 text-sm mt-1">Be the first to trade on BROKER</p>
+		<p class="text-gray-500 text-sm mt-1">Complete deals to build on-chain reputation</p>
 	</div>
 {/if}
