@@ -60,6 +60,18 @@ export const ESCROW_ABI = [
 
 export const RFQ_ABI = [
 	{
+		inputs: [
+			{ name: 'tokenA', type: 'address' },
+			{ name: 'amountA', type: 'uint256' },
+			{ name: 'tokenB', type: 'address' },
+			{ name: 'expiry', type: 'uint256' }
+		],
+		name: 'requestQuote',
+		outputs: [{ name: 'requestId', type: 'uint256' }],
+		stateMutability: 'nonpayable',
+		type: 'function'
+	},
+	{
 		inputs: [],
 		name: 'requestCount',
 		outputs: [{ name: '', type: 'uint256' }],
