@@ -53,17 +53,6 @@
 			</div>
 		</div>
 
-		<h2 class="font-display text-xl font-bold uppercase tracking-wider text-neon-green mt-8 mb-3">Architecture</h2>
-		<div class="card font-mono text-sm text-gray-400 p-4">
-			<pre>apps/
-  web/          → SvelteKit frontend (brokerclaw.bot)
-  docs/         → Documentation (docs.brokerclaw.bot)
-packages/
-  contracts/    → Solidity smart contracts (Foundry)
-  sdk/          → TypeScript SDK
-  mcp/          → MCP server for AI agents</pre>
-		</div>
-
 		<h2 class="font-display text-xl font-bold uppercase tracking-wider text-gray-400 mt-8 mb-3">Links</h2>
 		<ul class="space-y-2 ml-4">
 			<li class="flex items-start gap-2"><span class="text-neon-cyan">▸</span> <a href="https://brokerclaw.bot" class="text-neon-cyan hover:text-neon-pink transition-colors">brokerclaw.bot</a> — Trading interface</li>
