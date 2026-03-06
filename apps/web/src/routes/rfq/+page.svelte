@@ -146,7 +146,7 @@
 		txError = '';
 
 		try {
-			const amountAWei = parseUnits(amountWant, tokenWantDecimals);
+			const amountAWei = parseUnits(String(amountWant), tokenWantDecimals);
 			const expiryTimestamp = BigInt(Math.floor(Date.now() / 1000) + parseInt(expiry) * 3600);
 
 			txStatus = 'Submitting RFQ...';

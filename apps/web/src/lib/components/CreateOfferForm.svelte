@@ -159,8 +159,8 @@
 
 		try {
 			const isETH = tokenSellAddress.toLowerCase() === ETH_SENTINEL;
-			const amountAWei = parseUnits(amountSell, tokenSellDecimals);
-			const amountBWei = parseUnits(amountBuy, tokenBuyDecimals);
+			const amountAWei = parseUnits(String(amountSell), tokenSellDecimals);
+			const amountBWei = parseUnits(String(amountBuy), tokenBuyDecimals);
 			const expiryTimestamp = BigInt(Math.floor(Date.now() / 1000) + parseInt(expiry) * 3600);
 
 			// Step 1: Approve ERC-20 (skip for ETH)
