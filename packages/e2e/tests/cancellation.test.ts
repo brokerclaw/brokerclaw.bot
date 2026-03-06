@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import { type TestEnvironment, setupTestEnvironment, snapshot, revert, getBlockTimestamp } from "../src/setup.js";
 import { createStandardOffer, createStandardRFQ, getBalance, futureTimestamp } from "../src/helpers.js";
-import { OfferStatus, RFQStatus } from "@brokers-bot/sdk";
+import { OfferStatus, RFQStatus } from "@brokerclaw/sdk";
 import { AMOUNTS, TEST_ACCOUNTS } from "../src/fixtures.js";
 
 describe("Cancellation Flows", () => {

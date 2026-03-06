@@ -8,7 +8,7 @@ import type {
   Account,
 } from "viem";
 import { parseAbi } from "viem";
-import { BrokerClient, OfferStatus, RFQStatus } from "@brokers-bot/sdk";
+import { BrokerClient, OfferStatus, RFQStatus } from "@brokerclaw/sdk";
 import type { TestEnvironment } from "./setup.js";
 import { advanceTime, getBlockTimestamp } from "./setup.js";
 import { AMOUNTS } from "./fixtures.js";

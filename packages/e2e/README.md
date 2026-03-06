@@ -1,4 +1,4 @@
-# @brokers-bot/e2e
+# @brokerclaw/e2e
 
 End-to-end tests for the **Brokers Bot OTC Protocol** on Base.
 
@@ -53,7 +53,7 @@ Tests use:
 - **viem** for blockchain interaction
 - **Anvil** as the local test chain (Foundry)
 - **vitest** as the test runner
-- **@brokers-bot/sdk** for protocol interaction
+- **@brokerclaw/sdk** for protocol interaction
 
 ### Test Accounts
 

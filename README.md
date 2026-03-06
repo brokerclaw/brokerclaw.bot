@@ -92,7 +92,7 @@ cd packages/mcp
 pnpm build
 
 # Use with Claude Code
-claude mcp add brokers-bot node dist/index.js
+claude mcp add brokerclaw node dist/index.js
 ```
 
 ### MCP Tools

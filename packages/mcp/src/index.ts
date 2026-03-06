@@ -26,7 +26,7 @@ import { registerLeaderboardResource } from "./resources/leaderboard.js";
  */
 async function main(): Promise<void> {
   const server = new McpServer({
-    name: "brokers-bot-protocol",
+    name: "brokerclaw-protocol",
     version: "0.1.0",
   });
 

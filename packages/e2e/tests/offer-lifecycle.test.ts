@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { type TestEnvironment, setupTestEnvironment, snapshot, revert, getBlockTimestamp } from "../src/setup.js";
 import { createStandardOffer, getBalance } from "../src/helpers.js";
-import { OfferStatus } from "@brokers-bot/sdk";
+import { OfferStatus } from "@brokerclaw/sdk";
 import { AMOUNTS, TEST_ACCOUNTS } from "../src/fixtures.js";
 
 describe("Offer Lifecycle", () => {

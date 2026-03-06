@@ -8,7 +8,7 @@ import {
   advanceTime,
 } from "../src/setup.js";
 import { createStandardOffer, createStandardRFQ, expireOffer, futureTimestamp } from "../src/helpers.js";
-import { OfferStatus, RFQStatus } from "@brokers-bot/sdk";
+import { OfferStatus, RFQStatus } from "@brokerclaw/sdk";
 import { AMOUNTS, TIMES } from "../src/fixtures.js";
 
 describe("Expiry Handling", () => {

@@ -1,5 +1,5 @@
 {
-  "name": "brokers-bot",
+  "name": "brokerclaw",
   "private": true,
   "scripts": {
     "dev": "turbo dev",

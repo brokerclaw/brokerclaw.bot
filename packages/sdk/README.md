@@ -1,17 +1,17 @@
-# @brokers-bot/sdk
+# @brokerclaw/sdk
 
 TypeScript SDK for the **Brokers Bot OTC Protocol** on Base.
 
 ## Installation
 
 ```bash
-pnpm add @brokers-bot/sdk viem
+pnpm add @brokerclaw/sdk viem
 ```
 
 ## Quick Start
 
 ```typescript
-import { BrokerClient } from "@brokers-bot/sdk";
+import { BrokerClient } from "@brokerclaw/sdk";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
@@ -99,7 +99,7 @@ import {
   formatBps,
   isExpired,
   formatOfferSummary,
-} from "@brokers-bot/sdk";
+} from "@brokerclaw/sdk";
 
 formatTokenAmount(1000000000000000000n); // "1.0"
 calculateFee(1000n, 30n); // 3n (0.3%)

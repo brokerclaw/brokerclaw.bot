@@ -1,4 +1,4 @@
-# @brokers-bot/mcp
+# @brokerclaw/mcp
 
 MCP (Model Context Protocol) server for the **BROKER OTC Protocol** on Base. Enables any AI agent to discover, negotiate, and execute OTC trades through a standardized interface.
 

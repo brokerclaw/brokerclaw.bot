@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from "vitest";
 import { type TestEnvironment, setupTestEnvironment, snapshot, revert, getBlockTimestamp } from "../src/setup.js";
 import { getBalance, futureTimestamp } from "../src/helpers.js";
-import { BrokerClient, OfferStatus, RFQStatus } from "@brokers-bot/sdk";
+import { BrokerClient, OfferStatus, RFQStatus } from "@brokerclaw/sdk";
 import type { Address } from "viem";
 import { AMOUNTS, TEST_ACCOUNTS, MCP_TOOLS } from "../src/fixtures.js";
 
