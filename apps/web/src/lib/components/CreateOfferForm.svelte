@@ -15,6 +15,10 @@
 	let tokenBuySymbol = $state('');
 	let tokenSellError = $state('');
 	let tokenBuyError = $state('');
+	let tokenSellBalance = $state('');
+	let tokenBuyBalance = $state('');
+	let tokenSellDecimals = $state(18);
+	let tokenBuyDecimals = $state(18);
 
 	// Common tokens for quick select
 	const quickTokens = [
@@ -23,6 +27,39 @@
 		{ symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
 		{ symbol: 'BROKR', address: '0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3' }
 	];
+
+	async function fetchBalance(address: string): Promise<{ balance: string; decimals: number }> {
+		if (!$wallet.connected || !$wallet.address) return { balance: '', decimals: 18 };
+
+		if (address === '0x0000000000000000000000000000000000000000') {
+			try {
+				const bal = await publicClient.getBalance({ address: $wallet.address as `0x${string}` });
+				const num = Number(bal) / 1e18;
+				return { balance: num > 0.001 ? num.toFixed(4) : num.toFixed(8), decimals: 18 };
+			} catch { return { balance: '', decimals: 18 }; }
+		}
+
+		try {
+			const [bal, dec] = await Promise.all([
+				publicClient.readContract({
+					address: address as `0x${string}`,
+					abi: ERC20_ABI,
+					functionName: 'balanceOf',
+					args: [$wallet.address as `0x${string}`]
+				}),
+				publicClient.readContract({
+					address: address as `0x${string}`,
+					abi: ERC20_ABI,
+					functionName: 'decimals'
+				})
+			]);
+			const decimals = Number(dec);
+			const num = Number(bal) / 10 ** decimals;
+			return { balance: num > 0.001 ? num.toFixed(4) : num > 0 ? num.toFixed(8) : '0', decimals };
+		} catch {
+			return { balance: '', decimals: 18 };
+		}
+	}
 
 	async function resolveToken(address: string): Promise<string> {
 		if (!address || address.length < 42) return '';
@@ -46,10 +83,14 @@
 	async function onSellAddressChange() {
 		tokenSellError = '';
 		tokenSellSymbol = '';
+		tokenSellBalance = '';
 		if (tokenSellAddress.length === 42 || tokenSellAddress === '0x0000000000000000000000000000000000000000') {
 			const sym = await resolveToken(tokenSellAddress);
 			if (sym) {
 				tokenSellSymbol = sym;
+				const { balance, decimals } = await fetchBalance(tokenSellAddress);
+				tokenSellBalance = balance;
+				tokenSellDecimals = decimals;
 			} else {
 				tokenSellError = 'Token not found';
 			}
@@ -59,25 +100,35 @@
 	async function onBuyAddressChange() {
 		tokenBuyError = '';
 		tokenBuySymbol = '';
+		tokenBuyBalance = '';
 		if (tokenBuyAddress.length === 42 || tokenBuyAddress === '0x0000000000000000000000000000000000000000') {
 			const sym = await resolveToken(tokenBuyAddress);
 			if (sym) {
 				tokenBuySymbol = sym;
+				const { balance, decimals } = await fetchBalance(tokenBuyAddress);
+				tokenBuyBalance = balance;
+				tokenBuyDecimals = decimals;
 			} else {
 				tokenBuyError = 'Token not found';
 			}
 		}
 	}
 
-	function selectQuickToken(side: 'sell' | 'buy', token: { symbol: string; address: string }) {
+	async function selectQuickToken(side: 'sell' | 'buy', token: { symbol: string; address: string }) {
 		if (side === 'sell') {
 			tokenSellAddress = token.address;
 			tokenSellSymbol = token.symbol;
 			tokenSellError = '';
+			const { balance, decimals } = await fetchBalance(token.address);
+			tokenSellBalance = balance;
+			tokenSellDecimals = decimals;
 		} else {
 			tokenBuyAddress = token.address;
 			tokenBuySymbol = token.symbol;
 			tokenBuyError = '';
+			const { balance, decimals } = await fetchBalance(token.address);
+			tokenBuyBalance = balance;
+			tokenBuyDecimals = decimals;
 		}
 	}
 
@@ -143,14 +194,26 @@
 			{#if tokenSellError}
 				<p class="text-danger text-xs mt-1">{tokenSellError}</p>
 			{/if}
-			<input
-				type="number"
-				class="input-field mt-2"
-				placeholder="Amount"
-				bind:value={amountSell}
-				step="any"
-				min="0"
-			/>
+			<div class="relative mt-2">
+				<input
+					type="number"
+					class="input-field pr-16"
+					placeholder="Amount"
+					bind:value={amountSell}
+					step="any"
+					min="0"
+				/>
+				{#if tokenSellBalance}
+					<button
+						type="button"
+						class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-display uppercase tracking-wider text-neon-pink hover:text-neon-pink/80 transition-colors"
+						onclick={() => { amountSell = tokenSellBalance; }}
+					>MAX</button>
+				{/if}
+			</div>
+			{#if tokenSellBalance}
+				<p class="text-xs text-gray-500 mt-1">Balance: <span class="text-gray-400">{tokenSellBalance} {tokenSellSymbol}</span></p>
+			{/if}
 		</div>
 
 		<!-- Swap Button -->
@@ -163,6 +226,8 @@
 					const ta = tokenSellAddress; tokenSellAddress = tokenBuyAddress; tokenBuyAddress = ta;
 					const ts = tokenSellSymbol; tokenSellSymbol = tokenBuySymbol; tokenBuySymbol = ts;
 					const te = tokenSellError; tokenSellError = tokenBuyError; tokenBuyError = te;
+					const tb = tokenSellBalance; tokenSellBalance = tokenBuyBalance; tokenBuyBalance = tb;
+					const td = tokenSellDecimals; tokenSellDecimals = tokenBuyDecimals; tokenBuyDecimals = td;
 					const as_ = amountSell; amountSell = amountBuy; amountBuy = as_;
 				}}
 			>
@@ -212,6 +277,9 @@
 				step="any"
 				min="0"
 			/>
+			{#if tokenBuyBalance}
+				<p class="text-xs text-gray-500 mt-1">Balance: <span class="text-gray-400">{tokenBuyBalance} {tokenBuySymbol}</span></p>
+			{/if}
 		</div>
 
 		{#if rate}
