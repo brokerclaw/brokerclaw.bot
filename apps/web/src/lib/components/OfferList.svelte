@@ -26,6 +26,7 @@
 				if (statusFilter !== 'all' && o.status !== statusFilter) return false;
 				return true;
 			})
+			.sort((a, b) => Number(b.id) - Number(a.id))
 			.slice(0, limit > 0 ? limit : undefined)
 	);
 
