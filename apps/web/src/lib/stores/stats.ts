@@ -27,12 +27,28 @@ export const stats = writable<ProtocolStats>({
 
 export const leaderboard = writable<Agent[]>([]);
 
-function formatVolume(weiVolume: bigint): string {
+let ethPriceUsd = 0;
+
+async function fetchEthPrice(): Promise<number> {
+	if (ethPriceUsd > 0) return ethPriceUsd;
+	try {
+		const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+		const data = await res.json();
+		ethPriceUsd = data.ethereum.usd;
+		return ethPriceUsd;
+	} catch {
+		return 2500; // fallback
+	}
+}
+
+function formatVolumeUsd(weiVolume: bigint, price: number): string {
 	const eth = Number(formatEther(weiVolume));
-	if (eth >= 1000) return `${(eth / 1000).toFixed(1)}K`;
-	if (eth >= 1) return eth.toFixed(2);
-	if (eth > 0) return eth.toFixed(4);
-	return '0';
+	const usd = eth * price;
+	if (usd >= 1_000_000) return `$${(usd / 1_000_000).toFixed(1)}M`;
+	if (usd >= 1000) return `$${(usd / 1000).toFixed(1)}K`;
+	if (usd >= 1) return `$${usd.toFixed(2)}`;
+	if (usd > 0) return `$${usd.toFixed(4)}`;
+	return '$0';
 }
 
 export async function fetchStats() {
@@ -89,7 +105,8 @@ export async function fetchStats() {
 			} catch { /* skip */ }
 		}
 
-		// Fetch reputation stats for all agents
+		// Fetch ETH price + reputation stats
+		const ethPrice = await fetchEthPrice();
 		const agentList: Agent[] = [];
 		let totalVolume = 0n;
 
@@ -112,11 +129,12 @@ export async function fetchStats() {
 
 				totalVolume += agentStats.totalVolume;
 
+				const volEth = Number(formatEther(agentStats.totalVolume));
 				agentList.push({
 					address: addr,
 					name: `${addr.slice(0, 6)}...${addr.slice(-4)}`,
 					deals: Number(agentStats.completedDeals),
-					volume: Number(formatEther(agentStats.totalVolume)),
+					volume: volEth * ethPrice,
 					reputation: Number(score),
 					lastActive: Number(agentStats.lastDealTimestamp),
 					isAgent: false
@@ -132,7 +150,7 @@ export async function fetchStats() {
 		leaderboard.set(agentList);
 
 		stats.set({
-			totalVolume: formatVolume(totalVolume),
+			totalVolume: formatVolumeUsd(totalVolume, ethPrice),
 			totalDeals: filledDeals,
 			activeAgents: allAddresses.size,
 			openOffers,
