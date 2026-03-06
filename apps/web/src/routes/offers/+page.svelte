@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>Offers — Brokers Bot</title>
+	<title>Offers — BrokerClaw</title>
 </svelte:head>
 
 <div class="space-y-8 animate-fade-in">
