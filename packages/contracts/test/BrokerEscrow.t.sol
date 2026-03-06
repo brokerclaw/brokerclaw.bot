@@ -317,6 +317,49 @@ contract BrokerEscrowTest is Test {
         assertEq(tokenB.balanceOf(taker), takerBalBefore);
     }
 
+    function test_counterOffer_noDoubleSpend_chainedCounters() public {
+        // C-2: Verify chained counters can't double-spend
+        // Each counter is independently funded, so no shared escrow risk
+        vm.prank(maker);
+        uint256 offerId =
+            escrow.createOffer(address(tokenA), AMOUNT_A, address(tokenB), AMOUNT_B, block.timestamp + 1 hours);
+
+        // Taker1 counters (deposits 150 tokenB)
+        uint256 counter1Amount = 150 ether;
+        vm.prank(taker);
+        escrow.counterOffer(offerId, counter1Amount); // creates offer 2
+
+        // Taker2 also counters the original (deposits 180 tokenB)
+        address taker2 = makeAddr("taker2");
+        tokenB.mint(taker2, 200 ether);
+        vm.prank(taker2);
+        tokenB.approve(address(escrow), type(uint256).max);
+        uint256 counter2Amount = 180 ether;
+        vm.prank(taker2);
+        escrow.counterOffer(offerId, counter2Amount); // creates offer 3
+
+        // Escrow holds: AMOUNT_A (original) + 150 tokenB (counter1) + 180 tokenB (counter2)
+        assertEq(tokenA.balanceOf(address(escrow)), AMOUNT_A);
+        assertEq(tokenB.balanceOf(address(escrow)), counter1Amount + counter2Amount);
+
+        // Taker1 cancels their counter — gets only their 150 back
+        vm.prank(taker);
+        escrow.cancelOffer(2);
+        assertEq(tokenB.balanceOf(address(escrow)), counter2Amount);
+
+        // Original is still open, maker cancels — gets their tokenA back
+        vm.prank(maker);
+        escrow.cancelOffer(offerId);
+        assertEq(tokenA.balanceOf(address(escrow)), 0);
+
+        // Taker2 cancels their counter — gets their 180 back
+        vm.prank(taker2);
+        escrow.cancelOffer(3);
+        assertEq(tokenB.balanceOf(address(escrow)), 0);
+
+        // No funds stuck in escrow
+    }
+
     function test_counterOffer_revert_samePrice() public {
         vm.prank(maker);
         uint256 offerId =
