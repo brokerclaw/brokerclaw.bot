@@ -44,6 +44,13 @@ export const ESCROW_ABI = [
 	},
 	{
 		inputs: [{ name: 'offerId', type: 'uint256' }],
+		name: 'cancelOffer',
+		outputs: [],
+		stateMutability: 'nonpayable',
+		type: 'function'
+	},
+	{
+		inputs: [{ name: 'offerId', type: 'uint256' }],
 		name: 'fillOffer',
 		outputs: [],
 		stateMutability: 'payable',

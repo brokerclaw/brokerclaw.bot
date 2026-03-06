@@ -19,6 +19,9 @@
 	let fillingId = $state('');
 	let fillStatus = $state('');
 	let fillError = $state('');
+	let cancellingId = $state('');
+	let cancelStatus = $state('');
+	let cancelError = $state('');
 
 	const filteredOffers = $derived(
 		$offers
@@ -131,6 +134,42 @@
 			setTimeout(() => { fillingId = ''; fillStatus = ''; fillError = ''; }, 3000);
 		}
 	}
+
+	async function cancelOffer(offer: any) {
+		if (!$wallet.connected || !$wallet.address) return;
+		const client = get(walletClient);
+		if (!client) return;
+
+		cancellingId = offer.id;
+		cancelStatus = '';
+		cancelError = '';
+
+		try {
+			cancelStatus = 'Cancelling...';
+			const hash = await client.writeContract({
+				address: ADDRESSES.ESCROW,
+				abi: ESCROW_ABI,
+				functionName: 'cancelOffer',
+				args: [BigInt(offer.id)],
+				chain: null,
+				account: $wallet.address as `0x${string}`
+			});
+
+			cancelStatus = 'Confirming...';
+			await publicClient.waitForTransactionReceipt({ hash });
+			cancelStatus = 'Cancelled ✅';
+			await fetchOffers();
+		} catch (err: any) {
+			console.error('Cancel error:', err);
+			if (err.message?.includes('User rejected') || err.message?.includes('User denied')) {
+				cancelError = 'Rejected';
+			} else {
+				cancelError = err.shortMessage || 'Failed';
+			}
+		} finally {
+			setTimeout(() => { cancellingId = ''; cancelStatus = ''; cancelError = ''; }, 3000);
+		}
+	}
 </script>
 
 {#if showFilters}
@@ -214,8 +253,15 @@
 										onclick={() => fillOffer(offer)}
 									>Fill</button>
 								{/if}
-							{:else if status === 'open' && $wallet.connected && offer.maker.toLowerCase() === $wallet.address?.toLowerCase()}
-								<span class="text-xs text-gray-600 font-display uppercase">Yours</span>
+							{:else if status === 'open' && !isExpired(offer.expiresAt) && $wallet.connected && offer.maker.toLowerCase() === $wallet.address?.toLowerCase()}
+								{#if cancellingId === offer.id}
+									<span class="text-xs {cancelError ? 'text-red-400' : 'text-neon-orange'}">{cancelStatus || cancelError}</span>
+								{:else}
+									<button
+										class="px-3 py-1 text-xs font-display uppercase tracking-wider rounded-md bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all"
+										onclick={() => cancelOffer(offer)}
+									>Cancel</button>
+								{/if}
 							{:else if status === 'filled'}
 								<a href="https://basescan.org/address/{offer.filledBy}" target="_blank" class="font-mono text-xs text-gray-500 hover:text-neon-cyan transition-colors">
 									{shortenAddress(offer.filledBy || '')}
@@ -265,6 +311,15 @@
 								class="px-3 py-1 text-xs font-display uppercase tracking-wider rounded-md bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/30 hover:bg-neon-cyan/20 transition-all"
 								onclick={() => fillOffer(offer)}
 							>Fill</button>
+						{/if}
+					{:else if status === 'open' && !isExpired(offer.expiresAt) && $wallet.connected && offer.maker.toLowerCase() === $wallet.address?.toLowerCase()}
+						{#if cancellingId === offer.id}
+							<span class="text-xs {cancelError ? 'text-red-400' : 'text-neon-orange'}">{cancelStatus || cancelError}</span>
+						{:else}
+							<button
+								class="px-3 py-1 text-xs font-display uppercase tracking-wider rounded-md bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all"
+								onclick={() => cancelOffer(offer)}
+							>Cancel</button>
 						{/if}
 					{/if}
 				</div>
