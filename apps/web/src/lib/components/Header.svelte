@@ -7,7 +7,8 @@
 		{ href: '/offers', label: 'Offers' },
 		{ href: '/rfq', label: 'RFQ' },
 		{ href: '/leaderboard', label: 'Leaderboard' },
-		{ href: '/deals', label: 'Deals' }
+		{ href: '/deals', label: 'Deals' },
+		{ href: 'https://docs.brokerclaw.bot', label: 'Docs', external: true }
 	];
 
 	let mobileMenuOpen = $state(false);
@@ -32,12 +33,11 @@
 
 		<nav class="hidden md:flex items-center gap-1">
 			{#each navItems as item}
-				<a
-					href={item.href}
-					class={isActive(item.href, $page.url.pathname) ? 'nav-link-active' : 'nav-link'}
-				>
-					{item.label}
-				</a>
+				{#if item.external}
+					<a href={item.href} target="_blank" rel="noopener noreferrer" class="nav-link">{item.label} ↗</a>
+				{:else}
+					<a href={item.href} class={isActive(item.href, $page.url.pathname) ? 'nav-link-active' : 'nav-link'}>{item.label}</a>
+				{/if}
 			{/each}
 		</nav>
 
