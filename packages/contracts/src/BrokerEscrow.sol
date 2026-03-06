@@ -180,7 +180,11 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
     }
 
     /// @inheritdoc IBrokerEscrow
-    function counterOffer(uint256 offerId, uint256 newAmountB) external nonReentrant validOffer(offerId) {
+    /// @dev The counter-party deposits tokenB into escrow. The original offer stays Open
+    ///      (still fillable by others). The counter-offer is a reversed offer: counter-party
+    ///      is the maker offering tokenB, wanting tokenA at the proposed price.
+    ///      The original maker can fill the counter-offer to accept the new price.
+    function counterOffer(uint256 offerId, uint256 newAmountB) external payable nonReentrant validOffer(offerId) {
         Offer storage offer = _offers[offerId];
         require(offer.status == OfferStatus.Open, "BrokerEscrow: not open");
         require(block.timestamp <= offer.expiry, "BrokerEscrow: expired");
@@ -188,30 +192,26 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
         require(newAmountB != offer.amountB, "BrokerEscrow: same price");
         require(msg.sender != offer.maker, "BrokerEscrow: self-counter");
 
-        // Mark original as countered
-        offer.status = OfferStatus.Countered;
+        // Original offer stays Open — still fillable by anyone at the original price.
+        // Counter-party must deposit tokenB (skin in the game).
+        address actualTokenB = _depositToken(offer.tokenB, newAmountB);
 
-        // Create a new offer with the counter price (same tokens, reversed direction)
-        // The counter-party becomes the "maker" offering tokenB for tokenA
+        // Create a reversed offer: counter-party offers tokenB, wants tokenA
         uint256 counterOfferId = ++offerCount;
         _offers[counterOfferId] = Offer({
-            maker: offer.maker,
+            maker: msg.sender,
             taker: address(0),
-            tokenA: offer.tokenA,
-            tokenB: offer.tokenB,
-            amountA: offer.amountA,
-            amountB: newAmountB,
+            tokenA: actualTokenB,
+            tokenB: offer.tokenA,
+            amountA: newAmountB,
+            amountB: offer.amountA,
             expiry: offer.expiry,
             status: OfferStatus.Open,
             originalOfferId: offerId
         });
 
-        // tokenA stays in escrow (already held from original offer)
-
         emit CounterOfferCreated(offerId, counterOfferId, msg.sender, newAmountB);
-        emit OfferCreated(
-            counterOfferId, offer.maker, offer.tokenA, offer.tokenB, offer.amountA, newAmountB, offer.expiry
-        );
+        emit OfferCreated(counterOfferId, msg.sender, actualTokenB, offer.tokenA, newAmountB, offer.amountA, offer.expiry);
     }
 
     /// @inheritdoc IBrokerEscrow

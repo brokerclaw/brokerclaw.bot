@@ -236,20 +236,85 @@ contract BrokerEscrowTest is Test {
 
         uint256 newAmountB = 150 ether;
 
+        // Taker deposits tokenB as counter-offer (skin in the game)
         vm.prank(taker);
         escrow.counterOffer(offerId, newAmountB);
 
-        // Original offer is countered
+        // Original offer stays Open (still fillable by anyone)
         IBrokerEscrow.Offer memory original = escrow.getOffer(offerId);
-        assertEq(uint8(original.status), uint8(IBrokerEscrow.OfferStatus.Countered));
+        assertEq(uint8(original.status), uint8(IBrokerEscrow.OfferStatus.Open));
 
-        // New offer created with counter price
+        // Counter-offer: taker is maker, offering tokenB for tokenA (reversed)
         IBrokerEscrow.Offer memory counter = escrow.getOffer(2);
-        assertEq(counter.maker, maker);
-        assertEq(counter.amountA, AMOUNT_A);
-        assertEq(counter.amountB, newAmountB);
+        assertEq(counter.maker, taker);
+        assertEq(counter.tokenA, address(tokenB));
+        assertEq(counter.tokenB, address(tokenA));
+        assertEq(counter.amountA, newAmountB);
+        assertEq(counter.amountB, AMOUNT_A);
         assertEq(uint8(counter.status), uint8(IBrokerEscrow.OfferStatus.Open));
         assertEq(counter.originalOfferId, offerId);
+
+        // tokenB should be in escrow (deposited by taker)
+        assertEq(tokenB.balanceOf(address(escrow)), newAmountB);
+    }
+
+    function test_counterOffer_originalStillFillable() public {
+        vm.prank(maker);
+        uint256 offerId =
+            escrow.createOffer(address(tokenA), AMOUNT_A, address(tokenB), AMOUNT_B, block.timestamp + 1 hours);
+
+        // Taker counters
+        vm.prank(taker);
+        escrow.counterOffer(offerId, 150 ether);
+
+        // Another taker can still fill the original offer
+        address taker2 = makeAddr("taker2");
+        tokenB.mint(taker2, AMOUNT_B);
+        vm.prank(taker2);
+        tokenB.approve(address(escrow), type(uint256).max);
+        vm.prank(taker2);
+        escrow.fillOffer(offerId);
+
+        IBrokerEscrow.Offer memory original = escrow.getOffer(offerId);
+        assertEq(uint8(original.status), uint8(IBrokerEscrow.OfferStatus.Filled));
+    }
+
+    function test_counterOffer_makerCanFillCounter() public {
+        vm.prank(maker);
+        uint256 offerId =
+            escrow.createOffer(address(tokenA), AMOUNT_A, address(tokenB), AMOUNT_B, block.timestamp + 1 hours);
+
+        uint256 newAmountB = 150 ether;
+
+        vm.prank(taker);
+        escrow.counterOffer(offerId, newAmountB);
+
+        // Maker accepts the counter by filling it (deposits tokenA for counter's tokenB)
+        tokenA.mint(maker, AMOUNT_A);
+        vm.prank(maker);
+        escrow.fillOffer(2);
+
+        IBrokerEscrow.Offer memory counter = escrow.getOffer(2);
+        assertEq(uint8(counter.status), uint8(IBrokerEscrow.OfferStatus.Filled));
+        assertEq(counter.taker, maker);
+    }
+
+    function test_counterOffer_takerCanCancel() public {
+        vm.prank(maker);
+        uint256 offerId =
+            escrow.createOffer(address(tokenA), AMOUNT_A, address(tokenB), AMOUNT_B, block.timestamp + 1 hours);
+
+        uint256 newAmountB = 150 ether;
+        uint256 takerBalBefore = tokenB.balanceOf(taker);
+
+        vm.prank(taker);
+        escrow.counterOffer(offerId, newAmountB);
+
+        // Taker can cancel their counter-offer and get tokenB back
+        vm.prank(taker);
+        escrow.cancelOffer(2);
+
+        assertEq(tokenB.balanceOf(taker), takerBalBefore);
     }
 
     function test_counterOffer_revert_samePrice() public {

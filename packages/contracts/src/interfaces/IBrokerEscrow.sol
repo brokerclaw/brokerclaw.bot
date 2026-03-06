@@ -68,8 +68,10 @@ interface IBrokerEscrow {
     /// @notice Cancels an open offer and returns tokens to maker
     function cancelOffer(uint256 offerId) external;
 
-    /// @notice Creates a counter-offer with a different amountB
-    function counterOffer(uint256 offerId, uint256 newAmountB) external;
+    /// @notice Creates a counter-offer with a different amountB. Counter-party must deposit tokenB.
+    /// @dev The original offer stays Open. The counter-offer is a reversed offer where the
+    ///      counter-party is the maker depositing tokenB. The original maker can fill it to accept.
+    function counterOffer(uint256 offerId, uint256 newAmountB) external payable;
 
     /// @notice Returns the details of an offer
     function getOffer(uint256 offerId) external view returns (Offer memory);
