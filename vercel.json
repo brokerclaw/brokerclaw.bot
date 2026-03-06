@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install --prefix apps/web --install-strategy=nested",
-  "buildCommand": "npm run build --prefix apps/web",
-  "outputDirectory": "apps/web/build",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
   "framework": "svelte"
 }
