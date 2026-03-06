@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getWalletClient, getContractAddresses, getWalletAddress } from "../contracts/client.js";
-import { OTC_MARKET_ABI } from "../contracts/abi.js";
+import { OTC_MARKET_ABI, ERC20_ABI } from "../contracts/abi.js";
 import { formatOffer, formatTokenAmount, tokenSymbol } from "../utils/format.js";
 import {
   resolveToken,
@@ -117,6 +117,27 @@ export function registerOfferTools(server: McpServer): void {
 
         // Check if selling ETH (need to send as msg.value)
         const isETH = tokenAAddr === "0x0000000000000000000000000000000000000000";
+        const publicClient = getPublicClient();
+
+        // Approve ERC-20 if needed
+        if (!isETH) {
+          const currentAllowance = await publicClient.readContract({
+            address: tokenAAddr,
+            abi: ERC20_ABI,
+            functionName: "allowance",
+            args: [walletAddress!, addresses.otcMarket],
+          }) as bigint;
+
+          if (currentAllowance < rawAmountA) {
+            const approveTx = await walletClient.writeContract({
+              address: tokenAAddr,
+              abi: ERC20_ABI,
+              functionName: "approve",
+              args: [addresses.otcMarket, rawAmountA],
+            });
+            await publicClient.waitForTransactionReceipt({ hash: approveTx });
+          }
+        }
 
         const hash = await walletClient.writeContract({
           address: addresses.otcMarket,
@@ -178,11 +199,33 @@ export function registerOfferTools(server: McpServer): void {
           args: [id],
         })) as any;
 
+        // Approve tokenB if needed (taker pays tokenB)
+        const isETH = offer.tokenB.toLowerCase() === "0x0000000000000000000000000000000000000000";
+        if (!isETH) {
+          const currentAllowance = await publicClient.readContract({
+            address: offer.tokenB,
+            abi: ERC20_ABI,
+            functionName: "allowance",
+            args: [walletAddress!, addresses.otcMarket],
+          }) as bigint;
+
+          if (currentAllowance < offer.amountB) {
+            const approveTx = await walletClient.writeContract({
+              address: offer.tokenB,
+              abi: ERC20_ABI,
+              functionName: "approve",
+              args: [addresses.otcMarket, offer.amountB],
+            });
+            await publicClient.waitForTransactionReceipt({ hash: approveTx });
+          }
+        }
+
         const hash = await walletClient.writeContract({
           address: addresses.otcMarket,
           abi: OTC_MARKET_ABI,
           functionName: "fillOffer",
           args: [id],
+          ...(isETH ? { value: offer.amountB } : {}),
         });
 
         return {
@@ -238,11 +281,33 @@ export function registerOfferTools(server: McpServer): void {
         const walletClient = getWalletClient();
         const addresses = getContractAddresses();
 
+        // Counter-offer requires depositing tokenB — approve if needed
+        const isETH = offer.tokenB.toLowerCase() === "0x0000000000000000000000000000000000000000";
+        if (!isETH) {
+          const currentAllowance = await publicClient.readContract({
+            address: offer.tokenB,
+            abi: ERC20_ABI,
+            functionName: "allowance",
+            args: [walletAddress!, addresses.otcMarket],
+          }) as bigint;
+
+          if (currentAllowance < rawAmount) {
+            const approveTx = await walletClient.writeContract({
+              address: offer.tokenB,
+              abi: ERC20_ABI,
+              functionName: "approve",
+              args: [addresses.otcMarket, rawAmount],
+            });
+            await publicClient.waitForTransactionReceipt({ hash: approveTx });
+          }
+        }
+
         const hash = await walletClient.writeContract({
           address: addresses.otcMarket,
           abi: OTC_MARKET_ABI,
           functionName: "counterOffer",
           args: [id, rawAmount],
+          ...(isETH ? { value: rawAmount } : {}),
         });
 
         return {
