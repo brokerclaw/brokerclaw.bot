@@ -31,11 +31,21 @@ export const BASE_TESTNET: ContractAddresses = {
  * Well-known token addresses on Base mainnet
  */
 export const TOKENS: Record<string, Address> = {
+  ETH: "0x0000000000000000000000000000000000000000",
   WETH: "0x4200000000000000000000000000000000000006",
   USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   USDbC: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
   DAI: "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
   cbETH: "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+  BROKR: "0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3",
+};
+
+/**
+ * Known token decimals (tokens not listed default to 18)
+ */
+export const TOKEN_DECIMALS: Record<string, number> = {
+  "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913": 6,  // USDC
+  "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA": 6,  // USDbC
 };
 
 /**

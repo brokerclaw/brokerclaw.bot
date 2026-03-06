@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getWalletClient, getContractAddresses, getWalletAddress } from "../contracts/client.js";
 import { RFQ_ENGINE_ABI } from "../contracts/abi.js";
 import { formatTokenAmount, tokenSymbol, formatRfqStatus, formatQuoteStatus, abbreviateAddress } from "../utils/format.js";
-import { resolveToken, parseTokenAmount, hoursToSeconds, requireWallet } from "../utils/validation.js";
+import { resolveToken, parseTokenAmount, getTokenDecimals, hoursToExpiry, requireWallet } from "../utils/validation.js";
 
 export function registerRfqTools(server: McpServer): void {
   /**
@@ -25,8 +25,9 @@ export function registerRfqTools(server: McpServer): void {
       try {
         const tokenAAddr = resolveToken(tokenA);
         const tokenBAddr = resolveToken(tokenB);
-        const rawAmount = parseTokenAmount(amountA);
-        const expirySeconds = hoursToSeconds(expiryHours);
+        const decimalsA = await getTokenDecimals(tokenAAddr);
+        const rawAmount = parseTokenAmount(amountA, decimalsA);
+        const expirySeconds = hoursToExpiry(expiryHours);
 
         const walletClient = getWalletClient();
         const addresses = getContractAddresses();
@@ -159,8 +160,16 @@ export function registerRfqTools(server: McpServer): void {
 
       try {
         const id = BigInt(requestId);
-        const rawAmount = parseTokenAmount(amountB);
-        const expirySeconds = hoursToSeconds(expiryHours);
+        // Fetch request to get tokenB decimals
+        const reqData = (await getPublicClient().readContract({
+          address: addresses.rfqEngine,
+          abi: RFQ_ENGINE_ABI,
+          functionName: "getRequest",
+          args: [id],
+        })) as any;
+        const decimalsB = await getTokenDecimals(reqData.tokenB);
+        const rawAmount = parseTokenAmount(amountB, decimalsB);
+        const expirySeconds = hoursToExpiry(expiryHours);
 
         const walletClient = getWalletClient();
         const addresses = getContractAddresses();

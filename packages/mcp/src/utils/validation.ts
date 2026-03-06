@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isAddress, parseUnits } from "viem";
-import { TOKENS } from "../contracts/addresses.js";
+import { TOKENS, TOKEN_DECIMALS } from "../contracts/addresses.js";
+import { getPublicClient } from "../contracts/client.js";
 
 /**
  * Zod schema for an Ethereum address.
@@ -86,6 +87,32 @@ export function resolveToken(tokenInput: string): `0x${string}` {
 }
 
 /**
+ * Get decimals for a token address.
+ * Checks known tokens first, then queries on-chain.
+ */
+export async function getTokenDecimals(address: `0x${string}`): Promise<number> {
+  // ETH sentinel
+  if (address === "0x0000000000000000000000000000000000000000") return 18;
+
+  // Check known decimals
+  const known = TOKEN_DECIMALS[address];
+  if (known !== undefined) return known;
+
+  // Query on-chain
+  try {
+    const client = getPublicClient();
+    const decimals = await client.readContract({
+      address,
+      abi: [{ inputs: [], name: "decimals", outputs: [{ type: "uint8" }], stateMutability: "view", type: "function" }],
+      functionName: "decimals",
+    });
+    return Number(decimals);
+  } catch {
+    return 18; // fallback
+  }
+}
+
+/**
  * Parse a human-readable token amount to raw units.
  * Default decimals: 18
  */
@@ -94,10 +121,10 @@ export function parseTokenAmount(amount: string, decimals: number = 18): bigint 
 }
 
 /**
- * Convert hours to seconds (for on-chain expiry duration).
+ * Convert hours to an absolute expiry timestamp (seconds since epoch).
  */
-export function hoursToSeconds(hours: number): bigint {
-  return BigInt(Math.floor(hours * 3600));
+export function hoursToExpiry(hours: number): bigint {
+  return BigInt(Math.floor(Date.now() / 1000) + Math.floor(hours * 3600));
 }
 
 /**

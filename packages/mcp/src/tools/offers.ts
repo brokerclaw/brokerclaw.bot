@@ -6,7 +6,8 @@ import { formatOffer, formatTokenAmount, tokenSymbol } from "../utils/format.js"
 import {
   resolveToken,
   parseTokenAmount,
-  hoursToSeconds,
+  getTokenDecimals,
+  hoursToExpiry,
   requireWallet,
   limitSchema,
 } from "../utils/validation.js";
@@ -103,18 +104,26 @@ export function registerOfferTools(server: McpServer): void {
       try {
         const tokenAAddr = resolveToken(tokenA);
         const tokenBAddr = resolveToken(tokenB);
-        const rawAmountA = parseTokenAmount(amountA);
-        const rawAmountB = parseTokenAmount(amountB);
-        const expirySeconds = hoursToSeconds(expiryHours);
+        const [decimalsA, decimalsB] = await Promise.all([
+          getTokenDecimals(tokenAAddr),
+          getTokenDecimals(tokenBAddr),
+        ]);
+        const rawAmountA = parseTokenAmount(amountA, decimalsA);
+        const rawAmountB = parseTokenAmount(amountB, decimalsB);
+        const expiry = hoursToExpiry(expiryHours);
 
         const walletClient = getWalletClient();
         const addresses = getContractAddresses();
+
+        // Check if selling ETH (need to send as msg.value)
+        const isETH = tokenAAddr === "0x0000000000000000000000000000000000000000";
 
         const hash = await walletClient.writeContract({
           address: addresses.otcMarket,
           abi: OTC_MARKET_ABI,
           functionName: "createOffer",
-          args: [tokenAAddr, rawAmountA, tokenBAddr, rawAmountB, expirySeconds],
+          args: [tokenAAddr, rawAmountA, tokenBAddr, rawAmountB, expiry],
+          ...(isETH ? { value: rawAmountA } : {}),
         });
 
         return {
@@ -215,7 +224,17 @@ export function registerOfferTools(server: McpServer): void {
 
       try {
         const id = BigInt(offerId);
-        const rawAmount = parseTokenAmount(newAmountB);
+        // Fetch offer to get tokenB decimals
+        const publicClient = getPublicClient();
+        const addresses2 = getContractAddresses();
+        const offer = (await publicClient.readContract({
+          address: addresses2.otcMarket,
+          abi: OTC_MARKET_ABI,
+          functionName: "getOffer",
+          args: [id],
+        })) as any;
+        const decimalsB = await getTokenDecimals(offer.tokenB);
+        const rawAmount = parseTokenAmount(newAmountB, decimalsB);
         const walletClient = getWalletClient();
         const addresses = getContractAddresses();
 
