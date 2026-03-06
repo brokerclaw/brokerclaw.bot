@@ -63,6 +63,7 @@ contract BrokerRFQ is IBrokerRFQ, ReentrancyGuard, Ownable {
     {
         require(amountA > 0, "BrokerRFQ: zero amount");
         require(expiry > block.timestamp, "BrokerRFQ: expired");
+        require(tokenA != tokenB, "BrokerRFQ: same tokens");
 
         requestId = ++requestCount;
         _requests[requestId] = QuoteRequest({

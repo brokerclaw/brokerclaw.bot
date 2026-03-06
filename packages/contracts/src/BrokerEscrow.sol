@@ -5,6 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { IBrokerEscrow } from "./interfaces/IBrokerEscrow.sol";
 import { IBrokerReputation } from "./interfaces/IBrokerReputation.sol";
 import { IWETH } from "./interfaces/IWETH.sol";
@@ -14,7 +15,7 @@ import { IWETH } from "./interfaces/IWETH.sol";
 /// @notice Core OTC escrow contract for trustless peer-to-peer token swaps between AI agents on Base
 /// @dev Supports ETH (auto-wrapped to WETH) and any ERC-20 token. Fees are split between
 ///      burning $BANKERS tokens and the protocol treasury.
-contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
+contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable, Pausable {
     using SafeERC20 for IERC20;
 
     // ─── Constants ───────────────────────────────────────────────────────────────
@@ -90,6 +91,7 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
         external
         payable
         nonReentrant
+        whenNotPaused
         returns (uint256 offerId)
     {
         require(amountA > 0, "BrokerEscrow: zero amountA");
@@ -122,7 +124,7 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
     }
 
     /// @inheritdoc IBrokerEscrow
-    function fillOffer(uint256 offerId) external payable nonReentrant validOffer(offerId) {
+    function fillOffer(uint256 offerId) external payable nonReentrant whenNotPaused validOffer(offerId) {
         Offer storage offer = _offers[offerId];
         require(offer.status == OfferStatus.Open, "BrokerEscrow: not open");
         require(block.timestamp <= offer.expiry, "BrokerEscrow: expired");
@@ -188,7 +190,9 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
     ///      (still fillable by others). The counter-offer is a reversed offer: counter-party
     ///      is the maker offering tokenB, wanting tokenA at the proposed price.
     ///      The original maker can fill the counter-offer to accept the new price.
-    function counterOffer(uint256 offerId, uint256 newAmountB) external payable nonReentrant validOffer(offerId) {
+    /// L-1: Removed payable — offer.tokenB is always a resolved address (never ETH_SENTINEL),
+    ///      so _depositToken always takes the ERC-20 path which requires msg.value == 0.
+    function counterOffer(uint256 offerId, uint256 newAmountB) external nonReentrant whenNotPaused validOffer(offerId) {
         Offer storage offer = _offers[offerId];
         require(offer.status == OfferStatus.Open, "BrokerEscrow: not open");
         require(block.timestamp <= offer.expiry, "BrokerEscrow: expired");
@@ -291,6 +295,7 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
     /// @notice Updates the reputation contract address
     /// @param _reputation New reputation contract address
     function setReputation(address _reputation) external onlyOwner {
+        emit ReputationUpdated(address(reputation), _reputation);
         reputation = IBrokerReputation(_reputation);
     }
 
@@ -298,7 +303,36 @@ contract BrokerEscrow is IBrokerEscrow, ReentrancyGuard, Ownable {
     /// @param caller The address to authorize/deauthorize
     /// @param authorized Whether the address is authorized
     function setAuthorizedCaller(address caller, bool authorized) external onlyOwner {
+        emit AuthorizedCallerUpdated(caller, authorized);
         authorizedCallers[caller] = authorized;
+    }
+
+    /// @notice Pauses all offer creation, filling, and counter-offers (M-6)
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// @notice Unpauses the contract
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /// @notice Rescues ETH accidentally sent to the contract (M-3)
+    /// @param to Recipient address
+    /// @param amount Amount of ETH to rescue
+    function rescueETH(address payable to, uint256 amount) external onlyOwner {
+        require(to != address(0), "BrokerEscrow: zero address");
+        (bool success,) = to.call{ value: amount }("");
+        require(success, "BrokerEscrow: ETH transfer failed");
+    }
+
+    /// @notice Rescues ERC-20 tokens accidentally sent to the contract
+    /// @param token The token address
+    /// @param to Recipient address
+    /// @param amount Amount to rescue
+    function rescueERC20(address token, address to, uint256 amount) external onlyOwner {
+        require(to != address(0), "BrokerEscrow: zero address");
+        IERC20(token).safeTransfer(to, amount);
     }
 
     // ─── Internal Functions ──────────────────────────────────────────────────────

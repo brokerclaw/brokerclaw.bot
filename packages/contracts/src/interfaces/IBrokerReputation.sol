@@ -5,11 +5,11 @@ pragma solidity ^0.8.28;
 /// @notice Interface for the BROKER on-chain reputation system
 interface IBrokerReputation {
     /// @notice Agent statistics
+    /// @dev L-5: Removed redundant dealCount (was always == completedDeals)
     struct AgentStats {
-        uint256 dealCount;
-        uint256 totalVolume;
         uint256 completedDeals;
         uint256 cancelledDeals;
+        uint256 totalVolume;
         uint256 firstDealTimestamp;
         uint256 lastDealTimestamp;
     }

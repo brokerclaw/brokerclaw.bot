@@ -451,8 +451,8 @@ contract BrokerEscrowTest is Test {
         escrow.fillOffer(offerId);
 
         // Both maker and taker should have reputation recorded
-        assertEq(reputation.getAgentStats(maker).dealCount, 1);
-        assertEq(reputation.getAgentStats(taker).dealCount, 1);
+        assertEq(reputation.getAgentStats(maker).completedDeals, 1);
+        assertEq(reputation.getAgentStats(taker).completedDeals, 1);
         assertEq(reputation.getAgentStats(maker).totalVolume, AMOUNT_A + AMOUNT_B);
     }
 

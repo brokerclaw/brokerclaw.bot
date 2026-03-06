@@ -56,6 +56,12 @@ interface IBrokerEscrow {
     /// @notice Emitted when the BROKER token address is updated
     event BrokerTokenUpdated(address oldToken, address newToken);
 
+    /// @notice Emitted when the reputation contract is updated (L-2)
+    event ReputationUpdated(address oldReputation, address newReputation);
+
+    /// @notice Emitted when an authorized caller is updated (L-2)
+    event AuthorizedCallerUpdated(address indexed caller, bool authorized);
+
     /// @notice Creates an OTC offer, locking tokenA in escrow
     function createOffer(address tokenA, uint256 amountA, address tokenB, uint256 amountB, uint256 expiry)
         external
@@ -71,7 +77,7 @@ interface IBrokerEscrow {
     /// @notice Creates a counter-offer with a different amountB. Counter-party must deposit tokenB.
     /// @dev The original offer stays Open. The counter-offer is a reversed offer where the
     ///      counter-party is the maker depositing tokenB. The original maker can fill it to accept.
-    function counterOffer(uint256 offerId, uint256 newAmountB) external payable;
+    function counterOffer(uint256 offerId, uint256 newAmountB) external;
 
     /// @notice Returns the details of an offer
     function getOffer(uint256 offerId) external view returns (Offer memory);

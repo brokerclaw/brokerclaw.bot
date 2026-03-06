@@ -88,12 +88,12 @@ contract BrokerReputation is IBrokerReputation, Ownable {
         AgentStats storage stats = _stats[agent];
 
         // No deals = no score
-        if (stats.dealCount == 0) return 0;
+        if (stats.completedDeals == 0) return 0;
 
         // Deal count component (capped at DEAL_COUNT_MAX)
-        uint256 dealCountScore = stats.dealCount >= DEAL_COUNT_MAX
+        uint256 dealCountScore = stats.completedDeals >= DEAL_COUNT_MAX
             ? DEAL_COUNT_WEIGHT
-            : (stats.dealCount * DEAL_COUNT_WEIGHT) / DEAL_COUNT_MAX;
+            : (stats.completedDeals * DEAL_COUNT_WEIGHT) / DEAL_COUNT_MAX;
 
         // Volume component (capped at VOLUME_MAX)
         uint256 volumeScore =
@@ -122,6 +122,7 @@ contract BrokerReputation is IBrokerReputation, Ownable {
     /// @notice Updates the escrow contract address
     /// @param _escrow New escrow contract address
     function setEscrow(address _escrow) external onlyOwner {
+        require(_escrow != address(0), "BrokerReputation: zero escrow");
         emit EscrowUpdated(escrow, _escrow);
         escrow = _escrow;
     }
@@ -138,7 +139,6 @@ contract BrokerReputation is IBrokerReputation, Ownable {
             stats.firstDealTimestamp = block.timestamp;
         }
 
-        stats.dealCount++;
         stats.completedDeals++;
         stats.totalVolume += volume;
         stats.lastDealTimestamp = block.timestamp;

@@ -24,7 +24,7 @@ contract BrokerReputationTest is Test {
         reputation.recordDeal(agent1, agent2, 10 ether);
 
         IBrokerReputation.AgentStats memory stats1 = reputation.getAgentStats(agent1);
-        assertEq(stats1.dealCount, 1);
+        assertEq(stats1.completedDeals, 1);
         assertEq(stats1.completedDeals, 1);
         assertEq(stats1.totalVolume, 10 ether);
         assertEq(stats1.firstDealTimestamp, block.timestamp);
@@ -32,7 +32,7 @@ contract BrokerReputationTest is Test {
         assertEq(stats1.cancelledDeals, 0);
 
         IBrokerReputation.AgentStats memory stats2 = reputation.getAgentStats(agent2);
-        assertEq(stats2.dealCount, 1);
+        assertEq(stats2.completedDeals, 1);
         assertEq(stats2.totalVolume, 10 ether);
     }
 
@@ -51,7 +51,7 @@ contract BrokerReputationTest is Test {
         vm.stopPrank();
 
         IBrokerReputation.AgentStats memory stats = reputation.getAgentStats(agent1);
-        assertEq(stats.dealCount, 2);
+        assertEq(stats.completedDeals, 2);
         assertEq(stats.completedDeals, 2);
         assertEq(stats.totalVolume, 30 ether);
     }
@@ -152,6 +152,12 @@ contract BrokerReputationTest is Test {
         vm.prank(agent1);
         vm.expectRevert();
         reputation.setEscrow(makeAddr("newEscrow"));
+    }
+
+    function test_setEscrow_revert_zero() public {
+        vm.prank(owner);
+        vm.expectRevert("BrokerReputation: zero escrow");
+        reputation.setEscrow(address(0));
     }
 
     // ─── Fuzz Tests ──────────────────────────────────────────────────────────────
