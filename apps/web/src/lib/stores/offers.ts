@@ -15,7 +15,7 @@ const symbolCache: Record<string, string> = {
 	'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913': 'USDC',
 	'0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA': 'USDbC',
 	'0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb': 'DAI',
-	'0x3b613C384C46226aF0e4Bc4d0aB31F66fBE43Ba3': 'BROKER'
+	'0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3': 'BROKR'
 };
 
 async function getSymbol(address: string): Promise<string> {
