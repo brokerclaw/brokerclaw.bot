@@ -21,8 +21,7 @@
 		{ symbol: 'ETH', address: '0x0000000000000000000000000000000000000000' },
 		{ symbol: 'WETH', address: '0x4200000000000000000000000000000000000006' },
 		{ symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
-		{ symbol: 'BROKR', address: '0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3' },
-		{ symbol: 'DAI', address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb' }
+		{ symbol: 'BROKR', address: '0xB7fc2f54603A4ba8AfeEA4289aF24479aaBDDBa3' }
 	];
 
 	async function resolveToken(address: string): Promise<string> {
