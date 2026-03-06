@@ -1,31 +1,30 @@
 import type { Address } from "viem";
 
 export interface ContractAddresses {
-  otcMarket: Address;
-  rfqEngine: Address;
-  reputation: Address;
   escrow: Address;
+  rfq: Address;
+  reputation: Address;
 }
 
 /**
  * Deployed contract addresses on Base mainnet (chainId 8453)
- * These will be updated after mainnet deployment.
+ * Deployed: 2026-03-06
+ * Deployer: 0x29D85610b0Ed8bb591d2C765546dA8b4004C8ec3
  */
 export const BASE_MAINNET: ContractAddresses = {
-  otcMarket: "0x0000000000000000000000000000000000000001" as Address,
-  rfqEngine: "0x0000000000000000000000000000000000000002" as Address,
-  reputation: "0x0000000000000000000000000000000000000003" as Address,
-  escrow: "0x0000000000000000000000000000000000000004" as Address,
+  escrow: "0xd141E2De0Cca22feaB5F764040A5BD3d7A84AEce" as Address,
+  rfq: "0x3aFa1253e28a93b5Eda721C32666AB017D27132f" as Address,
+  reputation: "0x65f08ed423585AAA8C95721080aF69B748E27C64" as Address,
 };
 
 /**
  * Deployed contract addresses on Base Sepolia testnet (chainId 84532)
+ * Not yet deployed.
  */
 export const BASE_TESTNET: ContractAddresses = {
-  otcMarket: "0x0000000000000000000000000000000000000001" as Address,
-  rfqEngine: "0x0000000000000000000000000000000000000002" as Address,
-  reputation: "0x0000000000000000000000000000000000000003" as Address,
-  escrow: "0x0000000000000000000000000000000000000004" as Address,
+  escrow: "0x0000000000000000000000000000000000000000" as Address,
+  rfq: "0x0000000000000000000000000000000000000000" as Address,
+  reputation: "0x0000000000000000000000000000000000000000" as Address,
 };
 
 /**

@@ -6,18 +6,18 @@ export interface BrokerAddresses {
   rfq: Address;
 }
 
-/** Base mainnet (chainId: 8453) */
+/** Base mainnet (chainId: 8453) — deployed 2026-03-06 */
 export const BASE_MAINNET_ADDRESSES: BrokerAddresses = {
-  escrow: "0xBR0KER00000000000000000000000000000ESC01" as Address,
-  reputation: "0xBR0KER00000000000000000000000000000REP01" as Address,
-  rfq: "0xBR0KER00000000000000000000000000000RFQ01" as Address,
+  escrow: "0xd141E2De0Cca22feaB5F764040A5BD3d7A84AEce" as Address,
+  reputation: "0x65f08ed423585AAA8C95721080aF69B748E27C64" as Address,
+  rfq: "0x3aFa1253e28a93b5Eda721C32666AB017D27132f" as Address,
 };
 
-/** Base Sepolia testnet (chainId: 84532) */
+/** Base Sepolia testnet (chainId: 84532) — not yet deployed */
 export const BASE_TESTNET_ADDRESSES: BrokerAddresses = {
-  escrow: "0xBR0KER0TEST000000000000000000000000ESC01" as Address,
-  reputation: "0xBR0KER0TEST000000000000000000000000REP01" as Address,
-  rfq: "0xBR0KER0TEST000000000000000000000000RFQ01" as Address,
+  escrow: "0x0000000000000000000000000000000000000000" as Address,
+  reputation: "0x0000000000000000000000000000000000000000" as Address,
+  rfq: "0x0000000000000000000000000000000000000000" as Address,
 };
 
 /** Resolve addresses by chain ID. Falls back to testnet for unknown chains. */
