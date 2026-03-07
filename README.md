@@ -83,7 +83,7 @@ forge test -vvv
 forge script script/Deploy.s.sol --rpc-url base --broadcast
 ```
 
-## MCP Server
+## MCP Server (v0.2.0)
 
 ```bash
 cd packages/mcp
