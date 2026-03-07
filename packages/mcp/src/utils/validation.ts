@@ -64,25 +64,67 @@ export const offerStatusSchema = z
   .enum(["open", "filled", "cancelled", "expired", "countered"])
   .optional();
 
+/** In-memory cache of symbols resolved via DexScreener */
+const dexScreenerCache: Record<string, `0x${string}`> = {};
+
+/**
+ * Resolve a token symbol to a Base address using the DexScreener API (free, no auth).
+ */
+async function resolveTokenViaDexScreener(symbol: string): Promise<`0x${string}` | undefined> {
+  const upper = symbol.toUpperCase();
+  if (dexScreenerCache[upper]) return dexScreenerCache[upper];
+
+  try {
+    const res = await fetch(
+      `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(symbol)}`,
+    );
+    const data = (await res.json()) as {
+      pairs: Array<{
+        chainId: string;
+        baseToken: { address: string; symbol: string };
+      }> | null;
+    };
+    if (!data.pairs) return undefined;
+
+    const match = data.pairs.find(
+      (p) => p.chainId === "base" && p.baseToken.symbol.toUpperCase() === upper,
+    );
+    if (match) {
+      const addr = match.baseToken.address as `0x${string}`;
+      dexScreenerCache[upper] = addr;
+      return addr;
+    }
+  } catch {
+    // DexScreener unavailable
+  }
+  return undefined;
+}
+
 /**
  * Resolve a token identifier (symbol or address) to an address.
- * Accepts: "USDC", "usdc", or a raw 0x address.
+ * Accepts: "USDC", "usdc", a raw 0x address, or any symbol on Base (via DexScreener).
  */
-export function resolveToken(tokenInput: string): `0x${string}` {
+export async function resolveToken(tokenInput: string): Promise<`0x${string}`> {
   // If it's already an address
   if (isAddress(tokenInput)) {
     return tokenInput as `0x${string}`;
   }
 
-  // Try symbol lookup (case-insensitive)
+  // Try hardcoded symbol lookup first (case-insensitive)
   const upper = tokenInput.toUpperCase();
   const address = TOKENS[upper];
   if (address) {
     return address;
   }
 
+  // Fallback: resolve via DexScreener (any token on Base)
+  const dexAddr = await resolveTokenViaDexScreener(upper);
+  if (dexAddr) {
+    return dexAddr;
+  }
+
   throw new Error(
-    `Unknown token: "${tokenInput}". Use an address or one of: ${Object.keys(TOKENS).join(", ")}`
+    `Unknown token: "${tokenInput}". Use an address or one of: ${Object.keys(TOKENS).join(", ")}`,
   );
 }
 

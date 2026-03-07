@@ -29,26 +29,18 @@ export function registerOfferTools(server: McpServer): void {
       const addresses = getContractAddresses();
 
       try {
-        let offers: readonly any[];
+        const totalOffers = (await client.readContract({
+          address: addresses.escrow,
+          abi: OTC_MARKET_ABI,
+          functionName: "offerCount",
+        })) as bigint;
 
-        if (token) {
-          const tokenAddress = resolveToken(token);
-          offers = (await client.readContract({
-            address: addresses.otcMarket,
-            abi: OTC_MARKET_ABI,
-            functionName: "getOffersByToken",
-            args: [tokenAddress, BigInt(limit)],
-          })) as readonly any[];
-        } else {
-          offers = (await client.readContract({
-            address: addresses.otcMarket,
-            abi: OTC_MARKET_ABI,
-            functionName: "getOpenOffers",
-            args: [0n, BigInt(limit)],
-          })) as readonly any[];
+        if (totalOffers === 0n) {
+          return {
+            content: [{ type: "text", text: "No offers found." }],
+          };
         }
 
-        // Filter by status if specified
         const statusMap: Record<string, number> = {
           open: 0,
           filled: 1,
@@ -56,8 +48,39 @@ export function registerOfferTools(server: McpServer): void {
           expired: 3,
           countered: 4,
         };
-        if (status && statusMap[status] !== undefined) {
-          offers = offers.filter((o: any) => o.status === statusMap[status]);
+
+        const tokenAddress = token ? await resolveToken(token) : undefined;
+        const offers: any[] = [];
+
+        // Iterate from most recent to oldest
+        for (let i = Number(totalOffers); i >= 1 && offers.length < limit; i--) {
+          try {
+            const offer = (await client.readContract({
+              address: addresses.escrow,
+              abi: OTC_MARKET_ABI,
+              functionName: "getOffer",
+              args: [BigInt(i)],
+            })) as any;
+
+            const offerWithId = { ...offer, id: BigInt(i) };
+
+            // Filter by status
+            if (status && statusMap[status] !== undefined && offer.status !== statusMap[status]) {
+              continue;
+            }
+
+            // Filter by token
+            if (tokenAddress) {
+              const matchA = offer.tokenA.toLowerCase() === tokenAddress.toLowerCase();
+              const matchB = offer.tokenB.toLowerCase() === tokenAddress.toLowerCase();
+              if (!matchA && !matchB) continue;
+            }
+
+            offers.push(offerWithId);
+          } catch {
+            // Skip invalid offer IDs
+            continue;
+          }
         }
 
         if (offers.length === 0) {
@@ -71,7 +94,7 @@ export function registerOfferTools(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: `Found ${offers.length} offer(s):\n\n${formatted}`,
+              text: `Found ${offers.length} offer(s) (out of ${totalOffers} total):\n\n${formatted}`,
             },
           ],
         };
@@ -102,8 +125,8 @@ export function registerOfferTools(server: McpServer): void {
       requireWallet(walletAddress);
 
       try {
-        const tokenAAddr = resolveToken(tokenA);
-        const tokenBAddr = resolveToken(tokenB);
+        const tokenAAddr = await resolveToken(tokenA);
+        const tokenBAddr = await resolveToken(tokenB);
         const [decimalsA, decimalsB] = await Promise.all([
           getTokenDecimals(tokenAAddr),
           getTokenDecimals(tokenBAddr),

@@ -21,3 +21,4 @@ packages/contracts/out/
 packages/contracts/cache/
 *.lock
 pnpm-lock.yaml
+.envrc

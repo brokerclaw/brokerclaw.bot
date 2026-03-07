@@ -23,8 +23,8 @@ export function registerRfqTools(server: McpServer): void {
       requireWallet(walletAddress);
 
       try {
-        const tokenAAddr = resolveToken(tokenA);
-        const tokenBAddr = resolveToken(tokenB);
+        const tokenAAddr = await resolveToken(tokenA);
+        const tokenBAddr = await resolveToken(tokenB);
         const decimalsA = await getTokenDecimals(tokenAAddr);
         const rawAmount = parseTokenAmount(amountA, decimalsA);
         const expirySeconds = hoursToExpiry(expiryHours);
@@ -160,6 +160,7 @@ export function registerRfqTools(server: McpServer): void {
 
       try {
         const id = BigInt(requestId);
+        const addresses = getContractAddresses();
         // Fetch request to get tokenB decimals
         const reqData = (await getPublicClient().readContract({
           address: addresses.rfqEngine,
@@ -172,7 +173,6 @@ export function registerRfqTools(server: McpServer): void {
         const expirySeconds = hoursToExpiry(expiryHours);
 
         const walletClient = getWalletClient();
-        const addresses = getContractAddresses();
 
         const hash = await walletClient.writeContract({
           address: addresses.rfqEngine,

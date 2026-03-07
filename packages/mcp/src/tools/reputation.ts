@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
 import { REPUTATION_ABI } from "../contracts/abi.js";
-import { formatReputation, abbreviateAddress, formatSuccessRate, formatTokenAmount } from "../utils/format.js";
+import { formatReputation, abbreviateAddress, formatTokenAmount } from "../utils/format.js";
 
 export function registerReputationTools(server: McpServer): void {
   /**
@@ -58,35 +58,66 @@ export function registerReputationTools(server: McpServer): void {
       const addresses = getContractAddresses();
 
       try {
-        const deals = (await client.readContract({
+        // Fetch OfferFilled events where the agent is maker or taker
+        const currentBlock = await client.getBlockNumber();
+        const fromBlock = currentBlock > 10000n ? currentBlock - 10000n : 0n;
+        const addr = agentAddress.toLowerCase() as `0x${string}`;
+
+        const logs = await client.getLogs({
           address: addresses.otcMarket,
-          abi: [{
-            type: "function",
-            name: "getDealsByAgent",
-            stateMutability: "view",
+          event: {
+            type: "event",
+            name: "OfferFilled",
             inputs: [
-              { name: "agent", type: "address" },
-              { name: "limit", type: "uint256" },
+              { name: "offerId", type: "uint256", indexed: true },
+              { name: "taker", type: "address", indexed: true },
+              { name: "feeA", type: "uint256", indexed: false },
+              { name: "feeB", type: "uint256", indexed: false },
             ],
-            outputs: [
-              {
-                type: "tuple[]",
-                components: [
-                  { name: "offerId", type: "uint256" },
-                  { name: "maker", type: "address" },
-                  { name: "taker", type: "address" },
-                  { name: "tokenA", type: "address" },
-                  { name: "amountA", type: "uint256" },
-                  { name: "tokenB", type: "address" },
-                  { name: "amountB", type: "uint256" },
-                  { name: "timestamp", type: "uint256" },
-                ],
-              },
-            ],
-          }] as const,
-          functionName: "getDealsByAgent",
-          args: [agentAddress as `0x${string}`, BigInt(limit)],
-        })) as readonly any[];
+          },
+          fromBlock,
+          toBlock: "latest",
+        });
+
+        // Filter for deals involving the agent and fetch offer details
+        const deals: any[] = [];
+        for (const log of logs.reverse()) {
+          if (deals.length >= limit) break;
+          const args = log.args as any;
+          try {
+            const offer = (await client.readContract({
+              address: addresses.otcMarket,
+              abi: [{
+                type: "function",
+                name: "getOffer",
+                stateMutability: "view",
+                inputs: [{ name: "offerId", type: "uint256" }],
+                outputs: [{
+                  type: "tuple",
+                  components: [
+                    { name: "maker", type: "address" },
+                    { name: "taker", type: "address" },
+                    { name: "tokenA", type: "address" },
+                    { name: "tokenB", type: "address" },
+                    { name: "amountA", type: "uint256" },
+                    { name: "amountB", type: "uint256" },
+                    { name: "expiry", type: "uint256" },
+                    { name: "status", type: "uint8" },
+                    { name: "originalOfferId", type: "uint256" },
+                  ],
+                }],
+              }] as const,
+              functionName: "getOffer",
+              args: [args.offerId],
+            })) as any;
+
+            if (offer.maker.toLowerCase() === addr || offer.taker.toLowerCase() === addr) {
+              deals.push({ offerId: args.offerId, ...offer, block: log.blockNumber });
+            }
+          } catch {
+            continue;
+          }
+        }
 
         if (deals.length === 0) {
           return {
@@ -106,7 +137,7 @@ export function registerReputationTools(server: McpServer): void {
               `  Maker: ${abbreviateAddress(d.maker)}`,
               `  Taker: ${abbreviateAddress(d.taker)}`,
               `  ${formatTokenAmount(d.amountA)} ↔ ${formatTokenAmount(d.amountB)}`,
-              `  Time: ${new Date(Number(d.timestamp) * 1000).toISOString()}`,
+              `  Block: ${d.block}`,
             ].join("\n")
           )
           .join("\n\n");

@@ -16,12 +16,41 @@ export function registerOffersResource(server: McpServer): void {
       const addresses = getContractAddresses();
 
       try {
-        const offers = (await client.readContract({
-          address: addresses.otcMarket,
+        const totalOffers = (await client.readContract({
+          address: addresses.escrow,
           abi: OTC_MARKET_ABI,
-          functionName: "getOpenOffers",
-          args: [0n, 50n],
-        })) as readonly any[];
+          functionName: "offerCount",
+        })) as bigint;
+
+        if (totalOffers === 0n) {
+          return {
+            contents: [
+              {
+                uri: uri.href,
+                mimeType: "text/plain",
+                text: "No open offers currently available.",
+              },
+            ],
+          };
+        }
+
+        const offers: any[] = [];
+        for (let i = Number(totalOffers); i >= 1 && offers.length < 50; i--) {
+          try {
+            const offer = (await client.readContract({
+              address: addresses.escrow,
+              abi: OTC_MARKET_ABI,
+              functionName: "getOffer",
+              args: [BigInt(i)],
+            })) as any;
+            // Only show open offers (status 0)
+            if (offer.status === 0) {
+              offers.push({ ...offer, id: BigInt(i) });
+            }
+          } catch {
+            continue;
+          }
+        }
 
         if (offers.length === 0) {
           return {

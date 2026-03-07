@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(forge:*)",
+      "mcp__brokers-bot__brokers_list_offers",
+      "WebFetch(domain:docs.bankr.bot)",
+      "mcp__plugin_bankr-agent_bankr-agent-api__bankr_agent_get_job_status",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm build:*)",
+      "Bash(sed -n '50,120p' node_modules/@modelcontextprotocol/sdk/dist/esm/server/streamableHttp.d.ts 2>/dev/null || sed -n '50,120p' node_modules/@modelcontextprotocol/sdk/dist/server/streamableHttp.d.ts 2>/dev/null)",
+      "Bash(pnpm:*)",
+      "Bash(curl:*)",
+      "Bash(claude mcp:*)",
+      "Bash(lsof:*)"
+    ]
+  }
+}

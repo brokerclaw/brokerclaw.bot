@@ -2,7 +2,9 @@ import type { Address } from "viem";
 
 export interface ContractAddresses {
   escrow: Address;
+  otcMarket: Address;
   rfq: Address;
+  rfqEngine: Address;
   reputation: Address;
 }
 
@@ -13,7 +15,9 @@ export interface ContractAddresses {
  */
 export const BASE_MAINNET: ContractAddresses = {
   escrow: "0xd141E2De0Cca22feaB5F764040A5BD3d7A84AEce" as Address,
+  otcMarket: "0xd141E2De0Cca22feaB5F764040A5BD3d7A84AEce" as Address,
   rfq: "0x3aFa1253e28a93b5Eda721C32666AB017D27132f" as Address,
+  rfqEngine: "0x3aFa1253e28a93b5Eda721C32666AB017D27132f" as Address,
   reputation: "0x65f08ed423585AAA8C95721080aF69B748E27C64" as Address,
 };
 
@@ -23,7 +27,9 @@ export const BASE_MAINNET: ContractAddresses = {
  */
 export const BASE_TESTNET: ContractAddresses = {
   escrow: "0x0000000000000000000000000000000000000000" as Address,
+  otcMarket: "0x0000000000000000000000000000000000000000" as Address,
   rfq: "0x0000000000000000000000000000000000000000" as Address,
+  rfqEngine: "0x0000000000000000000000000000000000000000" as Address,
   reputation: "0x0000000000000000000000000000000000000000" as Address,
 };
 

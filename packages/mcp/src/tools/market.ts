@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
-import { OTC_MARKET_ABI, REPUTATION_ABI } from "../contracts/abi.js";
-import { formatTokenAmount, tokenSymbol, abbreviateAddress, formatSuccessRate } from "../utils/format.js";
+import { OTC_MARKET_ABI } from "../contracts/abi.js";
+import { formatTokenAmount, tokenSymbol } from "../utils/format.js";
 import { resolveToken } from "../utils/validation.js";
 
 /**
@@ -56,8 +56,8 @@ export function registerMarketTools(server: McpServer): void {
       const client = getPublicClient();
 
       try {
-        const tokenAAddr = resolveToken(tokenA);
-        const tokenBAddr = resolveToken(tokenB);
+        const tokenAAddr = await resolveToken(tokenA);
+        const tokenBAddr = await resolveToken(tokenB);
         const amountIn = 1000000000000000000n; // 1 token (18 decimals)
 
         let bestQuote: bigint | null = null;
@@ -141,48 +141,28 @@ export function registerMarketTools(server: McpServer): void {
       const addresses = getContractAddresses();
 
       try {
-        // Fetch protocol stats in parallel
-        const [totalVolume, totalDeals, topAgents] = await Promise.all([
+        const [offerCount, feeBps] = await Promise.all([
           client.readContract({
             address: addresses.otcMarket,
             abi: OTC_MARKET_ABI,
-            functionName: "totalVolume",
+            functionName: "offerCount",
           }) as Promise<bigint>,
           client.readContract({
             address: addresses.otcMarket,
             abi: OTC_MARKET_ABI,
-            functionName: "totalDeals",
+            functionName: "feeBps",
           }) as Promise<bigint>,
-          client.readContract({
-            address: addresses.reputation,
-            abi: REPUTATION_ABI,
-            functionName: "getTopAgents",
-            args: [10n],
-          }) as Promise<readonly any[]>,
         ]);
-
-        const agentsFormatted =
-          topAgents.length > 0
-            ? topAgents
-                .map(
-                  (a: any, i: number) =>
-                    `  ${i + 1}. ${abbreviateAddress(a.agent)} — Score: ${a.score}, Deals: ${a.totalDeals}, Volume: ${formatTokenAmount(a.totalVolume)}`
-                )
-                .join("\n")
-            : "  No agents yet.";
 
         return {
           content: [
             {
               type: "text",
               text: [
-                "📊 Brokers Bot Stats",
+                "Brokers Bot Stats",
                 "═══════════════════════",
-                `  Total Volume: ${formatTokenAmount(totalVolume)} (raw units)`,
-                `  Total Deals: ${totalDeals}`,
-                "",
-                "🏆 Top Agents:",
-                agentsFormatted,
+                `  Total Offers: ${offerCount}`,
+                `  Fee: ${Number(feeBps) / 100}%`,
               ].join("\n"),
             },
           ],

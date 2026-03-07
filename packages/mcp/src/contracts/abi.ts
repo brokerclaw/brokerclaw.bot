@@ -68,107 +68,29 @@ export const OTC_MARKET_ABI = [
       {
         type: "tuple",
         components: [
-          { name: "id", type: "uint256" },
-          { name: "maker", type: "address" },
-          { name: "tokenA", type: "address" },
-          { name: "amountA", type: "uint256" },
-          { name: "tokenB", type: "address" },
-          { name: "amountB", type: "uint256" },
-          { name: "expiry", type: "uint256" },
-          { name: "status", type: "uint8" },
-        ],
-      },
-    ],
-  },
-  {
-    type: "function",
-    name: "getOfferCount",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "getOpenOffers",
-    stateMutability: "view",
-    inputs: [
-      { name: "offset", type: "uint256" },
-      { name: "limit", type: "uint256" },
-    ],
-    outputs: [
-      {
-        type: "tuple[]",
-        components: [
-          { name: "id", type: "uint256" },
-          { name: "maker", type: "address" },
-          { name: "tokenA", type: "address" },
-          { name: "amountA", type: "uint256" },
-          { name: "tokenB", type: "address" },
-          { name: "amountB", type: "uint256" },
-          { name: "expiry", type: "uint256" },
-          { name: "status", type: "uint8" },
-        ],
-      },
-    ],
-  },
-  {
-    type: "function",
-    name: "getOffersByToken",
-    stateMutability: "view",
-    inputs: [
-      { name: "token", type: "address" },
-      { name: "limit", type: "uint256" },
-    ],
-    outputs: [
-      {
-        type: "tuple[]",
-        components: [
-          { name: "id", type: "uint256" },
-          { name: "maker", type: "address" },
-          { name: "tokenA", type: "address" },
-          { name: "amountA", type: "uint256" },
-          { name: "tokenB", type: "address" },
-          { name: "amountB", type: "uint256" },
-          { name: "expiry", type: "uint256" },
-          { name: "status", type: "uint8" },
-        ],
-      },
-    ],
-  },
-  {
-    type: "function",
-    name: "getDealsByAgent",
-    stateMutability: "view",
-    inputs: [
-      { name: "agent", type: "address" },
-      { name: "limit", type: "uint256" },
-    ],
-    outputs: [
-      {
-        type: "tuple[]",
-        components: [
-          { name: "offerId", type: "uint256" },
           { name: "maker", type: "address" },
           { name: "taker", type: "address" },
           { name: "tokenA", type: "address" },
-          { name: "amountA", type: "uint256" },
           { name: "tokenB", type: "address" },
+          { name: "amountA", type: "uint256" },
           { name: "amountB", type: "uint256" },
-          { name: "timestamp", type: "uint256" },
+          { name: "expiry", type: "uint256" },
+          { name: "status", type: "uint8" },
+          { name: "originalOfferId", type: "uint256" },
         ],
       },
     ],
   },
   {
     type: "function",
-    name: "totalVolume",
+    name: "offerCount",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
-    name: "totalDeals",
+    name: "feeBps",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
@@ -178,7 +100,7 @@ export const OTC_MARKET_ABI = [
   {
     type: "function",
     name: "createOffer",
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     inputs: [
       { name: "tokenA", type: "address" },
       { name: "amountA", type: "uint256" },
@@ -191,14 +113,14 @@ export const OTC_MARKET_ABI = [
   {
     type: "function",
     name: "fillOffer",
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     inputs: [{ name: "offerId", type: "uint256" }],
     outputs: [],
   },
   {
     type: "function",
     name: "counterOffer",
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     inputs: [
       { name: "offerId", type: "uint256" },
       { name: "newAmountB", type: "uint256" },

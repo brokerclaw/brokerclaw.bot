@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
 import { OTC_MARKET_ABI } from "../contracts/abi.js";
-import { formatTokenAmount, tokenSymbol, abbreviateAddress, formatTimestamp } from "../utils/format.js";
+import { formatTokenAmount, tokenSymbol, abbreviateAddress } from "../utils/format.js";
 
 export function registerDealsResource(server: McpServer): void {
   server.resource(
@@ -21,18 +21,15 @@ export function registerDealsResource(server: McpServer): void {
         const fromBlock = currentBlock > 1000n ? currentBlock - 1000n : 0n;
 
         const logs = await client.getLogs({
-          address: addresses.otcMarket,
+          address: addresses.escrow,
           event: {
             type: "event",
-            name: "DealCompleted",
+            name: "OfferFilled",
             inputs: [
               { name: "offerId", type: "uint256", indexed: true },
-              { name: "maker", type: "address", indexed: true },
               { name: "taker", type: "address", indexed: true },
-              { name: "tokenA", type: "address", indexed: false },
-              { name: "amountA", type: "uint256", indexed: false },
-              { name: "tokenB", type: "address", indexed: false },
-              { name: "amountB", type: "uint256", indexed: false },
+              { name: "feeA", type: "uint256", indexed: false },
+              { name: "feeB", type: "uint256", indexed: false },
             ],
           },
           fromBlock,
@@ -51,20 +48,29 @@ export function registerDealsResource(server: McpServer): void {
           };
         }
 
-        const formatted = logs
-          .reverse()
-          .slice(0, 50)
-          .map((log) => {
-            const args = log.args as any;
-            return [
+        const recentLogs = logs.reverse().slice(0, 50);
+        const lines: string[] = [];
+        for (const log of recentLogs) {
+          const args = log.args as any;
+          try {
+            const offer = (await client.readContract({
+              address: addresses.escrow,
+              abi: OTC_MARKET_ABI,
+              functionName: "getOffer",
+              args: [args.offerId],
+            })) as any;
+            lines.push([
               `Deal (Offer #${args.offerId})`,
-              `  Maker: ${abbreviateAddress(args.maker)}`,
+              `  Maker: ${abbreviateAddress(offer.maker)}`,
               `  Taker: ${abbreviateAddress(args.taker)}`,
-              `  ${formatTokenAmount(args.amountA)} ${tokenSymbol(args.tokenA)} ↔ ${formatTokenAmount(args.amountB)} ${tokenSymbol(args.tokenB)}`,
+              `  ${formatTokenAmount(offer.amountA)} ${tokenSymbol(offer.tokenA)} ↔ ${formatTokenAmount(offer.amountB)} ${tokenSymbol(offer.tokenB)}`,
               `  Block: ${log.blockNumber}`,
-            ].join("\n");
-          })
-          .join("\n\n---\n\n");
+            ].join("\n"));
+          } catch {
+            lines.push(`Deal (Offer #${args.offerId}) — Block: ${log.blockNumber}`);
+          }
+        }
+        const formatted = lines.join("\n\n---\n\n");
 
         return {
           contents: [

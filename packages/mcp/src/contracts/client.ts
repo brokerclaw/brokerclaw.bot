@@ -37,10 +37,11 @@ function loadConfig(): BrokerConfig {
   const rpcUrl = process.env.BROKER_RPC_URL || defaultRpc;
 
   let account: Account | undefined;
-  if (process.env.BROKER_PRIVATE_KEY) {
-    const key = process.env.BROKER_PRIVATE_KEY.startsWith("0x")
-      ? (process.env.BROKER_PRIVATE_KEY as `0x${string}`)
-      : (`0x${process.env.BROKER_PRIVATE_KEY}` as `0x${string}`);
+  const rawKey = process.env.BROKER_PRIVATE_KEY;
+  if (rawKey && /^(0x)?[0-9a-fA-F]{64}$/.test(rawKey)) {
+    const key = rawKey.startsWith("0x")
+      ? (rawKey as `0x${string}`)
+      : (`0x${rawKey}` as `0x${string}`);
     account = privateKeyToAccount(key);
   }
 
