@@ -2,7 +2,7 @@
 	import { wallet, walletClient } from '$lib/stores/wallet';
 	import { connectWallet } from '$lib/stores/wallet';
 	import { publicClient } from '$lib/contracts/config';
-	import { ERC20_ABI, ESCROW_ABI } from '$lib/contracts/abi';
+	import { ERC20_ABI, ESCROW_ABI } from '@brokerclaw/sdk';
 	import { ADDRESSES } from '$lib/contracts/addresses';
 	import { parseUnits } from 'viem';
 	import { get } from 'svelte/store';

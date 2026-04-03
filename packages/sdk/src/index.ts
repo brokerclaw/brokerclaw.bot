@@ -32,6 +32,14 @@ export { OfferStatus, RFQStatus } from "./types.js";
 
 // ── Contracts ──────────────────────────────────────────────────
 export { BrokerEscrowABI, BrokerReputationABI, BrokerRFQABI, ERC20ABI } from "./contracts/abi.js";
+
+// Legacy aliases — consumers migrating from local ABI copies
+export { BrokerEscrowABI as ESCROW_ABI } from "./contracts/abi.js";
+export { BrokerRFQABI as RFQ_ABI } from "./contracts/abi.js";
+export { BrokerReputationABI as REPUTATION_ABI } from "./contracts/abi.js";
+export { BrokerEscrowABI as OTC_MARKET_ABI } from "./contracts/abi.js";
+export { BrokerRFQABI as RFQ_ENGINE_ABI } from "./contracts/abi.js";
+export { ERC20ABI as ERC20_ABI } from "./contracts/abi.js";
 export {
   getAddresses,
   BASE_MAINNET_ADDRESSES,

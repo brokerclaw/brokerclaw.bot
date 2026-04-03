@@ -2,7 +2,7 @@
 	import RFQList from '$lib/components/RFQList.svelte';
 	import { wallet, walletClient, connectWallet } from '$lib/stores/wallet';
 	import { publicClient } from '$lib/contracts/config';
-	import { ERC20_ABI, RFQ_ABI } from '$lib/contracts/abi';
+	import { ERC20_ABI, RFQ_ABI } from '@brokerclaw/sdk';
 	import { ADDRESSES } from '$lib/contracts/addresses';
 	import { get } from 'svelte/store';
 	import { parseUnits } from 'viem';

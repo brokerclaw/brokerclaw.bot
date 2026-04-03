@@ -3,7 +3,7 @@
 	import { offers, loading, fetchOffers } from '$lib/stores/offers';
 	import { wallet, walletClient } from '$lib/stores/wallet';
 	import { publicClient } from '$lib/contracts/config';
-	import { ESCROW_ABI, ERC20_ABI } from '$lib/contracts/abi';
+	import { ESCROW_ABI, ERC20_ABI } from '@brokerclaw/sdk';
 	import { ADDRESSES } from '$lib/contracts/addresses';
 	import { shortenAddress } from '$lib/utils/format';
 	import { get } from 'svelte/store';
@@ -15,7 +15,8 @@
 		if ($offers.length === 0) fetchOffers();
 	});
 
-	let statusFilter = $state(showFilters ? 'open' : 'all');
+	let statusFilterOverride = $state<string | null>(null);
+	let statusFilter = $derived(statusFilterOverride ?? (showFilters ? 'open' : 'all'));
 	let fillingId = $state('');
 	let fillStatus = $state('');
 	let fillError = $state('');
@@ -178,7 +179,7 @@
 			{#each ['all', 'open', 'filled', 'cancelled'] as s}
 				<button
 					class="px-3 py-1.5 text-xs font-display uppercase tracking-wider rounded-md transition-all {statusFilter === s ? 'bg-neon-pink/20 text-neon-pink border border-neon-pink/30' : 'bg-base-700/50 text-gray-500 hover:text-gray-300 border border-base-600/30'}"
-					onclick={() => statusFilter = s}
+					onclick={() => statusFilterOverride = s}
 				>
 					{s}
 				</button>
