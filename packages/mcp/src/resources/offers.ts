@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
-import { OTC_MARKET_ABI } from "../contracts/abi.js";
+import { OTC_MARKET_ABI } from "@brokerclaw/sdk";
 import { formatOffer } from "../utils/format.js";
 
 export function registerOffersResource(server: McpServer): void {

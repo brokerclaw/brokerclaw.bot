@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
-import { RFQ_ENGINE_ABI } from "../contracts/abi.js";
+import { RFQ_ENGINE_ABI } from "@brokerclaw/sdk";
 import { formatTokenAmount, tokenSymbol, abbreviateAddress, formatRfqStatus } from "../utils/format.js";
 
 export function registerRfqResource(server: McpServer): void {

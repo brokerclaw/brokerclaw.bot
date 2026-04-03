@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
-import { REPUTATION_ABI } from "../contracts/abi.js";
+import { REPUTATION_ABI } from "@brokerclaw/sdk";
 import { formatReputation, abbreviateAddress, formatTokenAmount } from "../utils/format.js";
 
 export function registerReputationTools(server: McpServer): void {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
-import { OTC_MARKET_ABI } from "../contracts/abi.js";
+import { OTC_MARKET_ABI } from "@brokerclaw/sdk";
 import { formatTokenAmount, tokenSymbol } from "../utils/format.js";
 import { resolveToken } from "../utils/validation.js";
 
