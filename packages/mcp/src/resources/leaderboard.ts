@@ -20,7 +20,7 @@ export function registerLeaderboardResource(server: McpServer): void {
           address: addresses.reputation,
           abi: REPUTATION_ABI,
           functionName: "getLeaderboard",
-          args: [25n],
+          args: [0n, 25n],
         })) as readonly any[];
 
         if (leaderboard.length === 0) {

@@ -91,10 +91,10 @@ export function registerRfqTools(server: McpServer): void {
         // Get all quotes
         const quotes = (await client.readContract({
           address: addresses.rfqEngine,
-          abi: RFQ_ENGINE_ABI,
+          abi: RFQ_ENGINE_ABI as any,
           functionName: "getQuotesForRequest",
           args: [id],
-        })) as readonly any[];
+        } as any)) as readonly any[];
 
         const requestInfo = [
           `RFQ #${request.id}`,

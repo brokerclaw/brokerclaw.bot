@@ -70,10 +70,9 @@ export class OfferManager {
       functionName: "createOffer",
       args: [
         params.sellToken,
-        params.buyToken,
         params.sellAmount,
+        params.buyToken,
         params.buyAmount,
-        minFillPercent,
         deadline,
       ],
       chain: wallet.chain,
@@ -105,10 +104,8 @@ export class OfferManager {
     validateOfferId(params.offerId);
     const wallet = this.requireWallet();
 
-    // Read the offer to know buyToken and amount
+    // Read the offer to know buyToken and amount for approval
     const offer = await this.getOffer(params.offerId);
-    const fillAmount = params.fillAmount ?? offer.buyAmount;
-    validatePositiveAmount(fillAmount, "fillAmount");
 
     // Ensure approval of buyToken
     const allowance = await this.publicClient.readContract({
@@ -118,12 +115,12 @@ export class OfferManager {
       args: [wallet.account.address, this.addresses.escrow],
     });
 
-    if ((allowance as bigint) < fillAmount) {
+    if ((allowance as bigint) < offer.buyAmount) {
       const approveHash = await wallet.writeContract({
         address: offer.buyToken,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [this.addresses.escrow, fillAmount],
+        args: [this.addresses.escrow, offer.buyAmount],
         chain: wallet.chain,
         account: wallet.account,
       });
@@ -134,7 +131,7 @@ export class OfferManager {
       address: this.addresses.escrow,
       abi: BrokerEscrowABI,
       functionName: "fillOffer",
-      args: [params.offerId, fillAmount],
+      args: [params.offerId],
       chain: wallet.chain,
       account: wallet.account,
     });
@@ -234,27 +231,35 @@ export class OfferManager {
     const result = await this.publicClient.readContract({
       address: this.addresses.escrow,
       abi: BrokerEscrowABI,
-      functionName: "offers",
+      functionName: "getOffer",
       args: [offerId],
     });
 
-    const r = result as readonly [
-      bigint, Address, Address, Address, bigint, bigint, bigint, bigint, number, Address, bigint, bigint
-    ];
+    const r = result as {
+      maker: Address;
+      taker: Address;
+      tokenA: Address;
+      tokenB: Address;
+      amountA: bigint;
+      amountB: bigint;
+      expiry: bigint;
+      status: number;
+      originalOfferId: bigint;
+    };
 
     return {
-      id: r[0],
-      maker: r[1],
-      sellToken: r[2],
-      buyToken: r[3],
-      sellAmount: r[4],
-      buyAmount: r[5],
-      minFillPercent: r[6],
-      deadline: r[7],
-      status: r[8] as OfferStatus,
-      filler: r[9],
-      filledAt: r[10],
-      createdAt: r[11],
+      id: offerId,
+      maker: r.maker,
+      sellToken: r.tokenA,
+      buyToken: r.tokenB,
+      sellAmount: r.amountA,
+      buyAmount: r.amountB,
+      minFillPercent: 10000n,
+      deadline: r.expiry,
+      status: r.status as OfferStatus,
+      filler: r.taker,
+      filledAt: 0n,
+      createdAt: 0n,
     };
   }
 

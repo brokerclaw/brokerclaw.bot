@@ -18,10 +18,10 @@ export function registerRfqResource(server: McpServer): void {
       try {
         const requests = (await client.readContract({
           address: addresses.rfqEngine,
-          abi: RFQ_ENGINE_ABI,
+          abi: RFQ_ENGINE_ABI as any,
           functionName: "getActiveRequests",
           args: [0n, 50n],
-        })) as readonly any[];
+        } as any)) as readonly any[];
 
         if (requests.length === 0) {
           return {

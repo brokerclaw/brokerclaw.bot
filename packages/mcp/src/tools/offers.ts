@@ -327,11 +327,11 @@ export function registerOfferTools(server: McpServer): void {
 
         const hash = await walletClient.writeContract({
           address: addresses.otcMarket,
-          abi: OTC_MARKET_ABI,
+          abi: OTC_MARKET_ABI as any,
           functionName: "counterOffer",
           args: [id, rawAmount],
           ...(isETH ? { value: rawAmount } : {}),
-        });
+        } as any);
 
         return {
           content: [

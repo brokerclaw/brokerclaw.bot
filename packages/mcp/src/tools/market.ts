@@ -149,9 +149,9 @@ export function registerMarketTools(server: McpServer): void {
           }) as Promise<bigint>,
           client.readContract({
             address: addresses.otcMarket,
-            abi: OTC_MARKET_ABI,
+            abi: OTC_MARKET_ABI as any,
             functionName: "feeBps",
-          }) as Promise<bigint>,
+          } as any) as Promise<bigint>,
         ]);
 
         return {

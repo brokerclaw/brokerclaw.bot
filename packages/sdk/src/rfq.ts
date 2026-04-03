@@ -66,7 +66,7 @@ export class RFQManager {
       address: this.addresses.rfq,
       abi: BrokerRFQABI,
       functionName: "requestQuote",
-      args: [params.sellToken, params.buyToken, params.sellAmount, deadline],
+      args: [params.sellToken, params.sellAmount, params.buyToken, deadline],
       chain: wallet.chain,
       account: wallet.account,
     });
