@@ -156,7 +156,10 @@ describe("RFQ Flow", () => {
         expiry,
       });
 
-      await env.brokerMaker.acceptQuote({ quoteId });
+      const { escrowOfferId } = await env.brokerMaker.acceptQuote({ quoteId });
+
+      // acceptQuote creates an escrow offer; taker must fill it to settle
+      await env.brokerTaker.fillOffer({ offerId: escrowOfferId });
 
       // Maker should receive buyToken (tokenB)
       const makerBalanceB_after = await getBalance(
@@ -262,8 +265,9 @@ describe("RFQ Flow", () => {
 
       const q1 = await env.brokerMaker.getQuote(quote1.quoteId);
       const q2 = await env.brokerMaker.getQuote(quote2.quoteId);
-      expect(q1.status).toBe(0);
-      expect(q2.status).not.toBe(0);
+      // Contract rejects all other active quotes when one is accepted
+      expect(q1.status).toBe(3); // Rejected
+      expect(q2.status).toBe(1); // Accepted
     });
   });
 

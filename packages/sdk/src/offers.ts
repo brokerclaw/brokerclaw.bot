@@ -202,8 +202,9 @@ export class OfferManager {
     for (const log of receipt.logs) {
       try {
         if (log.address.toLowerCase() === this.addresses.escrow.toLowerCase()) {
-          // CounterOfferCreated event: topics[2] is the counterOfferId
-          if (log.topics[2]) {
+          // CounterOfferCreated has 4 topics: [sig, originalOfferId, counterOfferId, counterParty]
+          // OfferCreated has 3 topics: [sig, offerId, maker] — topics[2] is maker address, not an ID
+          if (log.topics.length === 4 && log.topics[2]) {
             offerId = BigInt(log.topics[2]);
           }
         }
