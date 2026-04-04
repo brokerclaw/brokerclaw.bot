@@ -107,7 +107,9 @@ describe("Cancellation Flows", () => {
       expect(rfq.status).toBe(RFQStatus.Cancelled);
     });
 
-    it("should refund sellToken on RFQ cancellation", async () => {
+    it("should not affect token balance on RFQ request or cancellation", async () => {
+      // BrokerRFQ does NOT escrow tokens on requestQuote — it only records the request.
+      // Tokens are only moved when a quote is accepted (via acceptQuote → escrow).
       const balanceBefore = await getBalance(
         env.publicClient,
         env.tokenA,
@@ -118,15 +120,17 @@ describe("Cancellation Flows", () => {
         sellAmount: AMOUNTS.standard,
       });
 
+      // No tokens moved during request
       const balanceDuring = await getBalance(
         env.publicClient,
         env.tokenA,
         TEST_ACCOUNTS.maker.address
       );
-      expect(balanceBefore - balanceDuring).toBe(AMOUNTS.standard);
+      expect(balanceDuring).toBe(balanceBefore);
 
       await env.brokerMaker.cancelRFQ(rfqId);
 
+      // Balance unchanged after cancellation too
       const balanceAfter = await getBalance(
         env.publicClient,
         env.tokenA,
