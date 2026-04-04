@@ -37,10 +37,6 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Install Foundry dependencies
-        working-directory: packages/contracts
-        run: forge install --no-commit
-
       - name: Contract tests
         working-directory: packages/contracts
         run: forge test -vvv
