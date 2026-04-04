@@ -47,10 +47,6 @@ export function validateCreateOfferParams(params: CreateOfferParams): void {
     throw new ValidationError("sellToken and buyToken must be different");
   }
 
-  if (params.minFillPercent !== undefined) {
-    validateBasisPoints(params.minFillPercent, "minFillPercent");
-  }
-
   if (params.deadline !== undefined) {
     validateDeadline(params.deadline);
   }
@@ -71,7 +67,7 @@ export function validateRequestQuoteParams(params: RequestQuoteParams): void {
 }
 
 export function validateSubmitQuoteParams(params: SubmitQuoteParams): void {
-  validatePositiveAmount(params.buyAmount, "buyAmount");
+  validatePositiveAmount(params.amountB, "amountB");
 
   if (params.expiry !== undefined) {
     validateDeadline(params.expiry);

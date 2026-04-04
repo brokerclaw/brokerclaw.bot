@@ -8,11 +8,11 @@ export const BrokerEscrowABI = [
     inputs: [
       { name: "offerId", type: "uint256", indexed: true },
       { name: "maker", type: "address", indexed: true },
-      { name: "sellToken", type: "address", indexed: false },
-      { name: "buyToken", type: "address", indexed: false },
-      { name: "sellAmount", type: "uint256", indexed: false },
-      { name: "buyAmount", type: "uint256", indexed: false },
-      { name: "deadline", type: "uint256", indexed: false },
+      { name: "tokenA", type: "address", indexed: false },
+      { name: "tokenB", type: "address", indexed: false },
+      { name: "amountA", type: "uint256", indexed: false },
+      { name: "amountB", type: "uint256", indexed: false },
+      { name: "expiry", type: "uint256", indexed: false },
     ],
   },
   {
@@ -20,9 +20,9 @@ export const BrokerEscrowABI = [
     name: "OfferFilled",
     inputs: [
       { name: "offerId", type: "uint256", indexed: true },
-      { name: "filler", type: "address", indexed: true },
-      { name: "fillAmount", type: "uint256", indexed: false },
-      { name: "fee", type: "uint256", indexed: false },
+      { name: "taker", type: "address", indexed: true },
+      { name: "feeA", type: "uint256", indexed: false },
+      { name: "feeB", type: "uint256", indexed: false },
     ],
   },
   {
@@ -35,78 +35,16 @@ export const BrokerEscrowABI = [
   },
   {
     type: "event",
-    name: "CounterOffer",
+    name: "CounterOfferCreated",
     inputs: [
       { name: "originalOfferId", type: "uint256", indexed: true },
       { name: "counterOfferId", type: "uint256", indexed: true },
-      { name: "maker", type: "address", indexed: true },
+      { name: "counterParty", type: "address", indexed: true },
+      { name: "newAmountB", type: "uint256", indexed: false },
     ],
   },
 
   // Read functions
-  {
-    type: "function",
-    name: "offers",
-    stateMutability: "view",
-    inputs: [{ name: "offerId", type: "uint256" }],
-    outputs: [
-      { name: "id", type: "uint256" },
-      { name: "maker", type: "address" },
-      { name: "sellToken", type: "address" },
-      { name: "buyToken", type: "address" },
-      { name: "sellAmount", type: "uint256" },
-      { name: "buyAmount", type: "uint256" },
-      { name: "minFillPercent", type: "uint256" },
-      { name: "deadline", type: "uint256" },
-      { name: "status", type: "uint8" },
-      { name: "filler", type: "address" },
-      { name: "filledAt", type: "uint256" },
-      { name: "createdAt", type: "uint256" },
-    ],
-  },
-  {
-    type: "function",
-    name: "offerCount",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "getOffersByMaker",
-    stateMutability: "view",
-    inputs: [
-      { name: "maker", type: "address" },
-      { name: "offset", type: "uint256" },
-      { name: "limit", type: "uint256" },
-    ],
-    outputs: [{ name: "offerIds", type: "uint256[]" }],
-  },
-  {
-    type: "function",
-    name: "getOffersByToken",
-    stateMutability: "view",
-    inputs: [
-      { name: "token", type: "address" },
-      { name: "offset", type: "uint256" },
-      { name: "limit", type: "uint256" },
-    ],
-    outputs: [{ name: "offerIds", type: "uint256[]" }],
-  },
-  {
-    type: "function",
-    name: "feeConfig",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [
-      { name: "feeBps", type: "uint256" },
-      { name: "burnBps", type: "uint256" },
-      { name: "treasuryBps", type: "uint256" },
-      { name: "treasury", type: "address" },
-    ],
-  },
-
-  // Struct-returning getter
   {
     type: "function",
     name: "getOffer",
@@ -129,6 +67,27 @@ export const BrokerEscrowABI = [
         ],
       },
     ],
+  },
+  {
+    type: "function",
+    name: "offerCount",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "feeBps",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "treasury",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
   },
 
   // Write functions
@@ -164,12 +123,8 @@ export const BrokerEscrowABI = [
     name: "counterOffer",
     stateMutability: "nonpayable",
     inputs: [
-      { name: "originalOfferId", type: "uint256" },
-      { name: "sellToken", type: "address" },
-      { name: "buyToken", type: "address" },
-      { name: "sellAmount", type: "uint256" },
-      { name: "buyAmount", type: "uint256" },
-      { name: "deadline", type: "uint256" },
+      { name: "offerId", type: "uint256" },
+      { name: "newAmountB", type: "uint256" },
     ],
     outputs: [{ name: "counterOfferId", type: "uint256" }],
   },
@@ -178,63 +133,14 @@ export const BrokerEscrowABI = [
 // ── BrokerReputation ABI ───────────────────────────────────────
 
 export const BrokerReputationABI = [
-  // Events
-  {
-    type: "event",
-    name: "ReputationUpdated",
-    inputs: [
-      { name: "agent", type: "address", indexed: true },
-      { name: "newScore", type: "uint256", indexed: false },
-      { name: "totalDeals", type: "uint256", indexed: false },
-    ],
-  },
-
   // Read functions
   {
     type: "function",
-    name: "getReputation",
+    name: "getScore",
     stateMutability: "view",
     inputs: [{ name: "agent", type: "address" }],
-    outputs: [
-      { name: "agent", type: "address" },
-      { name: "totalDeals", type: "uint256" },
-      { name: "successfulDeals", type: "uint256" },
-      { name: "totalVolume", type: "uint256" },
-      { name: "avgSettlementTime", type: "uint256" },
-      { name: "score", type: "uint256" },
-      { name: "lastUpdated", type: "uint256" },
-    ],
+    outputs: [{ name: "score", type: "uint256" }],
   },
-  {
-    type: "function",
-    name: "getLeaderboard",
-    stateMutability: "view",
-    inputs: [
-      { name: "offset", type: "uint256" },
-      { name: "limit", type: "uint256" },
-    ],
-    outputs: [
-      { name: "agents", type: "address[]" },
-      { name: "scores", type: "uint256[]" },
-      { name: "deals", type: "uint256[]" },
-      { name: "volumes", type: "uint256[]" },
-    ],
-  },
-  {
-    type: "function",
-    name: "getStats",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [
-      { name: "totalOffers", type: "uint256" },
-      { name: "totalFills", type: "uint256" },
-      { name: "totalRFQs", type: "uint256" },
-      { name: "totalVolume", type: "uint256" },
-      { name: "totalFees", type: "uint256" },
-      { name: "uniqueAgents", type: "uint256" },
-    ],
-  },
-
   {
     type: "function",
     name: "getAgentStats",
@@ -256,13 +162,13 @@ export const BrokerReputationABI = [
   },
   {
     type: "function",
-    name: "getScore",
+    name: "escrow",
     stateMutability: "view",
-    inputs: [{ name: "agent", type: "address" }],
-    outputs: [{ name: "score", type: "uint256" }],
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
   },
 
-  // Write functions (called by escrow/rfq contracts)
+  // Write functions (called by escrow contract)
   {
     type: "function",
     name: "recordDeal",
@@ -271,8 +177,14 @@ export const BrokerReputationABI = [
       { name: "maker", type: "address" },
       { name: "taker", type: "address" },
       { name: "volume", type: "uint256" },
-      { name: "settlementTime", type: "uint256" },
     ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "recordCancellation",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "agent", type: "address" }],
     outputs: [],
   },
 ] as const;
@@ -283,88 +195,44 @@ export const BrokerRFQABI = [
   // Events
   {
     type: "event",
-    name: "RFQCreated",
+    name: "QuoteRequested",
     inputs: [
-      { name: "rfqId", type: "uint256", indexed: true },
+      { name: "requestId", type: "uint256", indexed: true },
       { name: "requester", type: "address", indexed: true },
-      { name: "sellToken", type: "address", indexed: false },
-      { name: "buyToken", type: "address", indexed: false },
-      { name: "sellAmount", type: "uint256", indexed: false },
+      { name: "tokenA", type: "address", indexed: false },
+      { name: "amountA", type: "uint256", indexed: false },
+      { name: "tokenB", type: "address", indexed: false },
+      { name: "expiry", type: "uint256", indexed: false },
     ],
   },
   {
     type: "event",
     name: "QuoteSubmitted",
     inputs: [
+      { name: "requestId", type: "uint256", indexed: true },
       { name: "quoteId", type: "uint256", indexed: true },
-      { name: "rfqId", type: "uint256", indexed: true },
       { name: "quoter", type: "address", indexed: true },
-      { name: "buyAmount", type: "uint256", indexed: false },
+      { name: "amountB", type: "uint256", indexed: false },
     ],
   },
   {
     type: "event",
     name: "QuoteAccepted",
     inputs: [
+      { name: "requestId", type: "uint256", indexed: true },
       { name: "quoteId", type: "uint256", indexed: true },
-      { name: "rfqId", type: "uint256", indexed: true },
+      { name: "escrowOfferId", type: "uint256", indexed: false },
     ],
   },
   {
     type: "event",
-    name: "RFQCancelled",
+    name: "RequestCancelled",
     inputs: [
-      { name: "rfqId", type: "uint256", indexed: true },
-      { name: "requester", type: "address", indexed: true },
+      { name: "requestId", type: "uint256", indexed: true },
     ],
   },
 
   // Read functions
-  {
-    type: "function",
-    name: "rfqs",
-    stateMutability: "view",
-    inputs: [{ name: "rfqId", type: "uint256" }],
-    outputs: [
-      { name: "id", type: "uint256" },
-      { name: "requester", type: "address" },
-      { name: "sellToken", type: "address" },
-      { name: "buyToken", type: "address" },
-      { name: "sellAmount", type: "uint256" },
-      { name: "deadline", type: "uint256" },
-      { name: "status", type: "uint8" },
-      { name: "createdAt", type: "uint256" },
-    ],
-  },
-  {
-    type: "function",
-    name: "quotes",
-    stateMutability: "view",
-    inputs: [{ name: "quoteId", type: "uint256" }],
-    outputs: [
-      { name: "id", type: "uint256" },
-      { name: "rfqId", type: "uint256" },
-      { name: "quoter", type: "address" },
-      { name: "buyAmount", type: "uint256" },
-      { name: "expiry", type: "uint256" },
-      { name: "accepted", type: "bool" },
-      { name: "createdAt", type: "uint256" },
-    ],
-  },
-  {
-    type: "function",
-    name: "rfqCount",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "requestCount",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
   {
     type: "function",
     name: "getRequest",
@@ -388,21 +256,43 @@ export const BrokerRFQABI = [
   },
   {
     type: "function",
-    name: "quoteCount",
+    name: "getQuote",
+    stateMutability: "view",
+    inputs: [{ name: "quoteId", type: "uint256" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        components: [
+          { name: "requestId", type: "uint256" },
+          { name: "quoter", type: "address" },
+          { name: "amountB", type: "uint256" },
+          { name: "quoteExpiry", type: "uint256" },
+          { name: "status", type: "uint8" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "function",
+    name: "getRequestQuotes",
+    stateMutability: "view",
+    inputs: [{ name: "requestId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256[]" }],
+  },
+  {
+    type: "function",
+    name: "requestCount",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
-    name: "getQuotesByRFQ",
+    name: "quoteCount",
     stateMutability: "view",
-    inputs: [
-      { name: "rfqId", type: "uint256" },
-      { name: "offset", type: "uint256" },
-      { name: "limit", type: "uint256" },
-    ],
-    outputs: [{ name: "quoteIds", type: "uint256[]" }],
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
   },
 
   // Write functions
@@ -416,7 +306,7 @@ export const BrokerRFQABI = [
       { name: "tokenB", type: "address" },
       { name: "expiry", type: "uint256" },
     ],
-    outputs: [{ name: "rfqId", type: "uint256" }],
+    outputs: [{ name: "requestId", type: "uint256" }],
   },
   {
     type: "function",
@@ -432,15 +322,15 @@ export const BrokerRFQABI = [
   {
     type: "function",
     name: "acceptQuote",
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     inputs: [{ name: "quoteId", type: "uint256" }],
-    outputs: [],
+    outputs: [{ name: "escrowOfferId", type: "uint256" }],
   },
   {
     type: "function",
-    name: "cancelRFQ",
+    name: "cancelRequest",
     stateMutability: "nonpayable",
-    inputs: [{ name: "rfqId", type: "uint256" }],
+    inputs: [{ name: "requestId", type: "uint256" }],
     outputs: [],
   },
 ] as const;

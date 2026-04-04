@@ -60,7 +60,7 @@ export function formatOfferSummary(
 /** Format a reputation score as a percentage (score is 0-10000) */
 export function formatReputationScore(rep: Reputation): string {
   const pct = Number(rep.score) / 100;
-  return `${pct.toFixed(1)}% (${rep.successfulDeals}/${rep.totalDeals} deals)`;
+  return `${pct.toFixed(1)}% (${rep.completedDeals} completed, ${rep.cancelledDeals} cancelled)`;
 }
 
 /** Calculate an exchange rate from offer amounts */
