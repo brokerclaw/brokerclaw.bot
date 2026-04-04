@@ -148,10 +148,10 @@ describe("Fee System", () => {
     });
 
     it("should correctly calculate fees on exact BPS boundaries", async () => {
-      // Amount of 10000 tokens -- fee should be exactly 3 tokens (30 bps)
+      // Amount of 10000 tokens -- fee should be exactly 30 tokens (30 bps = 0.3%)
       const amount = 10000n * 10n ** 18n;
       const fee = calculateExpectedFee(amount);
-      expect(fee).toBe(3n * 10n ** 18n); // Exactly 3 tokens
+      expect(fee).toBe(30n * 10n ** 18n); // Exactly 30 tokens
     });
   });
 });

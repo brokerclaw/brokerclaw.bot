@@ -162,6 +162,28 @@ export class OfferManager {
     validatePositiveAmount(params.newAmountB, "newAmountB");
     const wallet = this.requireWallet();
 
+    // Get original offer to find which token to approve (counter-offerer deposits tokenB)
+    const offer = await this.getOffer(params.originalOfferId);
+
+    const allowance = await this.publicClient.readContract({
+      address: offer.buyToken,
+      abi: ERC20ABI,
+      functionName: "allowance",
+      args: [wallet.account.address, this.addresses.escrow],
+    });
+
+    if ((allowance as bigint) < params.newAmountB) {
+      const approveHash = await wallet.writeContract({
+        address: offer.buyToken,
+        abi: ERC20ABI,
+        functionName: "approve",
+        args: [this.addresses.escrow, params.newAmountB],
+        chain: wallet.chain,
+        account: wallet.account,
+      });
+      await this.publicClient.waitForTransactionReceipt({ hash: approveHash });
+    }
+
     const hash = await wallet.writeContract({
       address: this.addresses.escrow,
       abi: BrokerEscrowABI,

@@ -28,7 +28,7 @@ export type {
   FeeConfig,
 } from "./types.js";
 
-export { OfferStatus, RFQStatus } from "./types.js";
+export { OfferStatus, RFQStatus, QuoteStatus } from "./types.js";
 
 // ── Contracts ──────────────────────────────────────────────────
 export { BrokerEscrowABI, BrokerReputationABI, BrokerRFQABI, ERC20ABI } from "./contracts/abi.js";

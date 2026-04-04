@@ -27,12 +27,17 @@ export enum OfferStatus {
 }
 
 export enum RFQStatus {
-  Pending = 0,
-  Quoted = 1,
-  Accepted = 2,
-  Settled = 3,
-  Expired = 4,
-  Cancelled = 5,
+  Open = 0,
+  Filled = 1,
+  Expired = 2,
+  Cancelled = 3,
+}
+
+export enum QuoteStatus {
+  Active = 0,
+  Accepted = 1,
+  Expired = 2,
+  Rejected = 3,
 }
 
 // ── Offer Types ────────────────────────────────────────────────

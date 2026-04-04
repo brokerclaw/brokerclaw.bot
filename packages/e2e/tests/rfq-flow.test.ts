@@ -40,7 +40,7 @@ describe("RFQ Flow", () => {
       expect(rfq.sellToken.toLowerCase()).toBe(env.tokenA.toLowerCase());
       expect(rfq.buyToken.toLowerCase()).toBe(env.tokenB.toLowerCase());
       expect(rfq.sellAmount).toBe(AMOUNTS.standard);
-      expect(rfq.status).toBe(RFQStatus.Pending);
+      expect(rfq.status).toBe(RFQStatus.Open);
     });
 
     it("should increment RFQ counter", async () => {
@@ -137,7 +137,7 @@ describe("RFQ Flow", () => {
       expect(quote.status).not.toBe(0);
 
       const rfq = await env.brokerMaker.getRFQ(rfqId);
-      expect(rfq.status).toBe(RFQStatus.Accepted);
+      expect(rfq.status).toBe(RFQStatus.Filled);
     });
 
     it("should settle tokens on quote acceptance", async () => {
@@ -214,7 +214,7 @@ describe("RFQ Flow", () => {
 
       // 2. Verify RFQ is pending
       let rfq = await env.brokerMaker.getRFQ(rfqResult.rfqId);
-      expect(rfq.status).toBe(RFQStatus.Pending);
+      expect(rfq.status).toBe(RFQStatus.Open);
 
       // 3. Taker submits a quote: offering 50 tokenB
       const quoteResult = await env.brokerTaker.submitQuote({
@@ -233,7 +233,7 @@ describe("RFQ Flow", () => {
 
       // 6. Verify settlement
       rfq = await env.brokerMaker.getRFQ(rfqResult.rfqId);
-      expect(rfq.status).toBe(RFQStatus.Accepted);
+      expect(rfq.status).toBe(RFQStatus.Filled);
 
       const acceptedQuote = await env.brokerMaker.getQuote(quoteResult.quoteId);
       expect(acceptedQuote.status).not.toBe(0);
