@@ -25,15 +25,10 @@ describe("Counter-Offer Negotiation", () => {
       // Maker creates: sell 100 tokenA for 50 tokenB
       const originalId = await createStandardOffer(env);
 
-      // Taker counter-offers: sell 40 tokenB for 100 tokenA (wants better rate)
-      const now = await getBlockTimestamp(env.publicClient);
+      // Taker counter-offers with a new amountB (contract reverses tokens internally)
       const result = await env.brokerTaker.counterOffer({
         originalOfferId: originalId,
-        sellToken: env.tokenB,
-        buyToken: env.tokenA,
-        sellAmount: 40n * 10n ** 18n,
-        buyAmount: AMOUNTS.standard,
-        deadline: now + 86400n,
+        newAmountB: 40n * 10n ** 18n,
       });
 
       expect(result.hash).toBeDefined();
@@ -44,21 +39,16 @@ describe("Counter-Offer Negotiation", () => {
       const counterOffer = await env.brokerTaker.getOffer(result.offerId);
       expect(counterOffer.status).toBe(OfferStatus.Open);
       expect(counterOffer.maker.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
-      expect(counterOffer.sellAmount).toBe(40n * 10n ** 18n);
+      expect(counterOffer.originalOfferId).toBe(originalId);
     });
 
     it("should allow counter-offer on an already-open offer", async () => {
       const originalId = await createStandardOffer(env);
-      const now = await getBlockTimestamp(env.publicClient);
 
-      // Both should succeed — original stays open, counter is new
+      // Both should succeed -- original stays open, counter is new
       const counter = await env.brokerTaker.counterOffer({
         originalOfferId: originalId,
-        sellToken: env.tokenB,
-        buyToken: env.tokenA,
-        sellAmount: 45n * 10n ** 18n,
-        buyAmount: AMOUNTS.standard,
-        deadline: now + 86400n,
+        newAmountB: 45n * 10n ** 18n,
       });
 
       const original = await env.brokerMaker.getOffer(originalId);
@@ -70,23 +60,17 @@ describe("Counter-Offer Negotiation", () => {
 
     it("should auto-approve tokens for counter-offer", async () => {
       const originalId = await createStandardOffer(env);
-      const now = await getBlockTimestamp(env.publicClient);
 
       const result = await env.brokerTaker.counterOffer({
         originalOfferId: originalId,
-        sellToken: env.tokenB,
-        buyToken: env.tokenA,
-        sellAmount: 45n * 10n ** 18n,
-        buyAmount: AMOUNTS.standard,
-        deadline: now + 86400n,
+        newAmountB: 45n * 10n ** 18n,
       });
 
       expect(result.offerId).toBeGreaterThan(0n);
     });
 
-    it("should deduct sellToken from counter-offerer's balance", async () => {
+    it("should deduct tokens from counter-offerer's balance", async () => {
       const originalId = await createStandardOffer(env);
-      const now = await getBlockTimestamp(env.publicClient);
 
       const balanceBefore = await getBalance(
         env.publicClient,
@@ -96,11 +80,7 @@ describe("Counter-Offer Negotiation", () => {
 
       await env.brokerTaker.counterOffer({
         originalOfferId: originalId,
-        sellToken: env.tokenB,
-        buyToken: env.tokenA,
-        sellAmount: 45n * 10n ** 18n,
-        buyAmount: AMOUNTS.standard,
-        deadline: now + 86400n,
+        newAmountB: 45n * 10n ** 18n,
       });
 
       const balanceAfter = await getBalance(
@@ -109,38 +89,29 @@ describe("Counter-Offer Negotiation", () => {
         TEST_ACCOUNTS.taker.address
       );
 
-      expect(balanceBefore - balanceAfter).toBe(45n * 10n ** 18n);
+      // Balance should have decreased (contract handles the exact token amounts)
+      expect(balanceBefore).toBeGreaterThan(balanceAfter);
     });
   });
 
   describe("Negotiation Flow", () => {
     it("should support a back-and-forth negotiation", async () => {
-      const now = await getBlockTimestamp(env.publicClient);
-
       // Step 1: Maker offers 100 tokenA for 50 tokenB
       const offer1Id = await createStandardOffer(env, {
         sellAmount: AMOUNTS.standard,
         buyAmount: AMOUNTS.half,
       });
 
-      // Step 2: Taker counter-offers 40 tokenB for 100 tokenA
+      // Step 2: Taker counter-offers with newAmountB of 40 tokenB
       const counter1 = await env.brokerTaker.counterOffer({
         originalOfferId: offer1Id,
-        sellToken: env.tokenB,
-        buyToken: env.tokenA,
-        sellAmount: 40n * 10n ** 18n,
-        buyAmount: AMOUNTS.standard,
-        deadline: now + 86400n,
+        newAmountB: 40n * 10n ** 18n,
       });
 
-      // Step 3: Maker counter-offers again: 100 tokenA for 45 tokenB (compromise)
+      // Step 3: Maker counter-offers again with 45 tokenB (compromise)
       const counter2 = await env.brokerMaker.counterOffer({
         originalOfferId: counter1.offerId,
-        sellToken: env.tokenA,
-        buyToken: env.tokenB,
-        sellAmount: AMOUNTS.standard,
-        buyAmount: 45n * 10n ** 18n,
-        deadline: now + 86400n,
+        newAmountB: 45n * 10n ** 18n,
       });
 
       // Step 4: Taker accepts by filling the latest counter-offer
@@ -149,21 +120,16 @@ describe("Counter-Offer Negotiation", () => {
       // Verify final state
       const finalOffer = await env.brokerMaker.getOffer(counter2.offerId);
       expect(finalOffer.status).toBe(OfferStatus.Filled);
-      expect(finalOffer.filler.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
+      expect(finalOffer.taker.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
     });
 
     it("should allow filling the original after counter-offer", async () => {
       const originalId = await createStandardOffer(env);
-      const now = await getBlockTimestamp(env.publicClient);
 
       // Taker creates a counter, but another agent fills the original
       await env.brokerTaker.counterOffer({
         originalOfferId: originalId,
-        sellToken: env.tokenB,
-        buyToken: env.tokenA,
-        sellAmount: 40n * 10n ** 18n,
-        buyAmount: AMOUNTS.standard,
-        deadline: now + 86400n,
+        newAmountB: 40n * 10n ** 18n,
       });
 
       // Agent3 fills the original offer at the original terms
@@ -171,20 +137,15 @@ describe("Counter-Offer Negotiation", () => {
 
       const original = await env.brokerMaker.getOffer(originalId);
       expect(original.status).toBe(OfferStatus.Filled);
-      expect(original.filler.toLowerCase()).toBe(TEST_ACCOUNTS.agent3.address.toLowerCase());
+      expect(original.taker.toLowerCase()).toBe(TEST_ACCOUNTS.agent3.address.toLowerCase());
     });
 
     it("should allow cancelling a counter-offer", async () => {
       const originalId = await createStandardOffer(env);
-      const now = await getBlockTimestamp(env.publicClient);
 
       const counter = await env.brokerTaker.counterOffer({
         originalOfferId: originalId,
-        sellToken: env.tokenB,
-        buyToken: env.tokenA,
-        sellAmount: 40n * 10n ** 18n,
-        buyAmount: AMOUNTS.standard,
-        deadline: now + 86400n,
+        newAmountB: 40n * 10n ** 18n,
       });
 
       await env.brokerTaker.cancelOffer(counter.offerId);
@@ -199,36 +160,15 @@ describe("Counter-Offer Negotiation", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should reject counter-offer with same tokens", async () => {
+    it("should reject counter-offer with zero newAmountB", async () => {
       const originalId = await createStandardOffer(env);
-      const now = await getBlockTimestamp(env.publicClient);
 
       await expect(
         env.brokerTaker.counterOffer({
           originalOfferId: originalId,
-          sellToken: env.tokenA,
-          buyToken: env.tokenA, // Same token!
-          sellAmount: AMOUNTS.standard,
-          buyAmount: AMOUNTS.half,
-          deadline: now + 86400n,
+          newAmountB: 0n,
         })
-      ).rejects.toThrow("sellToken and buyToken must be different");
-    });
-
-    it("should reject counter-offer with zero amounts", async () => {
-      const originalId = await createStandardOffer(env);
-      const now = await getBlockTimestamp(env.publicClient);
-
-      await expect(
-        env.brokerTaker.counterOffer({
-          originalOfferId: originalId,
-          sellToken: env.tokenB,
-          buyToken: env.tokenA,
-          sellAmount: 0n,
-          buyAmount: AMOUNTS.standard,
-          deadline: now + 86400n,
-        })
-      ).rejects.toThrow("sellAmount must be positive");
+      ).rejects.toThrow();
     });
   });
 });

@@ -120,8 +120,8 @@ describe("Expiry Handling", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
       await expect(
         env.brokerTaker.submitQuote({
-          rfqId,
-          buyAmount: AMOUNTS.half,
+          requestId: rfqId,
+          amountB: AMOUNTS.half,
           expiry,
         })
       ).rejects.toThrow();
@@ -146,8 +146,8 @@ describe("Expiry Handling", () => {
       const now = await getBlockTimestamp(env.publicClient);
 
       const { quoteId } = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry: now + TIMES.fiveMinutes,
       });
 
@@ -164,8 +164,8 @@ describe("Expiry Handling", () => {
       const expiry = await futureTimestamp(env.publicClient, TIMES.thirtyMinutes);
 
       const { quoteId } = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
@@ -180,15 +180,15 @@ describe("Expiry Handling", () => {
 
       // Short-lived quote
       const { quoteId: shortQuote } = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry: now + 60n,
       });
 
       // Long-lived quote
       const { quoteId: longQuote } = await env.brokerAgent3.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half + 5n * 10n ** 18n,
+        requestId: rfqId,
+        amountB: AMOUNTS.half + 5n * 10n ** 18n,
         expiry: now + TIMES.oneDay,
       });
 

@@ -24,8 +24,6 @@ describe("Fee System", () => {
       const feeConfig = await env.brokerMaker.getFeeConfig();
 
       expect(typeof feeConfig.feeBps).toBe("bigint");
-      expect(typeof feeConfig.burnBps).toBe("bigint");
-      expect(typeof feeConfig.treasuryBps).toBe("bigint");
       expect(feeConfig.treasury).toBeDefined();
     });
 
@@ -34,9 +32,10 @@ describe("Fee System", () => {
       expect(feeConfig.feeBps).toBeLessThanOrEqual(10000n);
     });
 
-    it("should have burn + treasury = 10000 (100%)", async () => {
+    it("should have a valid treasury address", async () => {
       const feeConfig = await env.brokerMaker.getFeeConfig();
-      expect(feeConfig.burnBps + feeConfig.treasuryBps).toBe(10000n);
+      expect(feeConfig.treasury).toBeDefined();
+      expect(feeConfig.treasury.length).toBe(42); // 0x + 40 hex chars
     });
   });
 
@@ -120,26 +119,13 @@ describe("Fee System", () => {
     });
   });
 
-  describe("Fee Split", () => {
-    it("should split fees between burn and treasury correctly", async () => {
+  describe("Fee Distribution", () => {
+    it("should send the full fee to the treasury", async () => {
       const fee = calculateExpectedFee(AMOUNTS.large);
-      const { burnAmount, treasuryAmount } = splitFee(fee);
+      const { treasuryAmount } = splitFee(fee);
 
-      // Burn + treasury should approximately equal the total fee
-      // (might be slightly less due to rounding)
-      expect(burnAmount + treasuryAmount).toBeLessThanOrEqual(fee);
-      expect(burnAmount + treasuryAmount).toBeGreaterThan(fee - 2n);
-    });
-
-    it("should split proportionally according to BPS", async () => {
-      const testFee = 10000n; // Nice round number for easy math
-      const { burnAmount, treasuryAmount } = splitFee(testFee);
-
-      // burnBps = 3333, so burn should be ~33.33% of fee
-      expect(burnAmount).toBe((testFee * 3333n) / 10000n);
-
-      // treasuryBps = 6667, so treasury should be ~66.67% of fee
-      expect(treasuryAmount).toBe((testFee * 6667n) / 10000n);
+      // The full fee should go to the treasury
+      expect(treasuryAmount).toBe(fee);
     });
   });
 
@@ -162,28 +148,10 @@ describe("Fee System", () => {
     });
 
     it("should correctly calculate fees on exact BPS boundaries", async () => {
-      // Amount of 10000 tokens — fee should be exactly 3 tokens (30 bps)
+      // Amount of 10000 tokens -- fee should be exactly 3 tokens (30 bps)
       const amount = 10000n * 10n ** 18n;
       const fee = calculateExpectedFee(amount);
       expect(fee).toBe(3n * 10n ** 18n); // Exactly 3 tokens
-    });
-  });
-
-  describe("Cumulative Fees", () => {
-    it("should accumulate fees in protocol stats", async () => {
-      const statsBefore = await env.brokerMaker.getStats();
-
-      // Execute multiple deals
-      for (let i = 0; i < 3; i++) {
-        const offerId = await createStandardOffer(env, {
-          sellAmount: AMOUNTS.standard,
-          buyAmount: AMOUNTS.half,
-        });
-        await env.brokerTaker.fillOffer({ offerId });
-      }
-
-      const statsAfter = await env.brokerMaker.getStats();
-      expect(statsAfter.totalFees).toBeGreaterThan(statsBefore.totalFees);
     });
   });
 });

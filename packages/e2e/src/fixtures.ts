@@ -70,10 +70,6 @@ export const AMOUNTS = {
 export const FEE_CONFIG = {
   /** Total fee: 30 bps (0.3%) */
   feeBps: 30n,
-  /** Burn portion: 10 bps of the fee */
-  burnBps: 3333n,
-  /** Treasury portion: remaining of the fee */
-  treasuryBps: 6667n,
 } as const;
 
 /** Timeouts and deadlines */
@@ -102,7 +98,6 @@ export const MCP_TOOLS = [
         buyToken: { type: "string" as const },
         sellAmount: { type: "string" as const },
         buyAmount: { type: "string" as const },
-        minFillPercent: { type: "string" as const },
         deadline: { type: "string" as const },
       },
       required: ["sellToken", "buyToken", "sellAmount", "buyAmount"],
@@ -115,7 +110,6 @@ export const MCP_TOOLS = [
       type: "object" as const,
       properties: {
         offerId: { type: "string" as const },
-        fillAmount: { type: "string" as const },
       },
       required: ["offerId"],
     },

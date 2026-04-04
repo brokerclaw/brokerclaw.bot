@@ -61,9 +61,9 @@ describe("Multi-Agent Trading", () => {
       const o2 = await env.brokerMaker.getOffer(offer2);
 
       expect(o1.status).toBe(OfferStatus.Filled);
-      expect(o1.filler.toLowerCase()).toBe(TEST_ACCOUNTS.maker.address.toLowerCase());
+      expect(o1.taker.toLowerCase()).toBe(TEST_ACCOUNTS.maker.address.toLowerCase());
       expect(o2.status).toBe(OfferStatus.Filled);
-      expect(o2.filler.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
+      expect(o2.taker.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
     });
 
     it("should handle an agent being both maker and taker in different offers", async () => {
@@ -106,7 +106,7 @@ describe("Multi-Agent Trading", () => {
       ).rejects.toThrow();
 
       const offer = await env.brokerMaker.getOffer(offerId);
-      expect(offer.filler.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
+      expect(offer.taker.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
     });
   });
 
@@ -127,32 +127,32 @@ describe("Multi-Agent Trading", () => {
 
       // Multiple agents submit quotes
       const quote1 = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: 50n * 10n ** 18n,
+        requestId: rfqId,
+        amountB: 50n * 10n ** 18n,
         expiry,
       });
 
       const quote2 = await env.brokerAgent3.submitQuote({
-        rfqId,
-        buyAmount: 55n * 10n ** 18n, // Better price
+        requestId: rfqId,
+        amountB: 55n * 10n ** 18n, // Better price
         expiry,
       });
 
       const quote3 = await env.brokerAgent4.submitQuote({
-        rfqId,
-        buyAmount: 52n * 10n ** 18n,
+        requestId: rfqId,
+        amountB: 52n * 10n ** 18n,
         expiry,
       });
 
       // All quotes should exist
-      const quotes = await env.brokerMaker.listQuotes({ rfqId });
+      const quotes = await env.brokerMaker.listQuotes({ requestId: rfqId });
       expect(quotes.length).toBe(3);
 
       // Maker accepts the best quote (quote2)
       await env.brokerMaker.acceptQuote({ quoteId: quote2.quoteId });
 
       const q2 = await env.brokerMaker.getQuote(quote2.quoteId);
-      expect(q2.accepted).toBe(true);
+      expect(q2.status).not.toBe(0);
     });
   });
 

@@ -150,8 +150,8 @@ describe("Cancellation Flows", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
       await expect(
         env.brokerTaker.submitQuote({
-          rfqId,
-          buyAmount: AMOUNTS.half,
+          requestId: rfqId,
+          amountB: AMOUNTS.half,
           expiry,
         })
       ).rejects.toThrow();
@@ -162,8 +162,8 @@ describe("Cancellation Flows", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
       const { quoteId } = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
@@ -181,8 +181,8 @@ describe("Cancellation Flows", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
       // Submit some quotes
-      await env.brokerTaker.submitQuote({ rfqId, buyAmount: AMOUNTS.half, expiry });
-      await env.brokerAgent3.submitQuote({ rfqId, buyAmount: AMOUNTS.standard, expiry });
+      await env.brokerTaker.submitQuote({ requestId: rfqId, amountB: AMOUNTS.half, expiry });
+      await env.brokerAgent3.submitQuote({ requestId: rfqId, amountB: AMOUNTS.standard, expiry });
 
       // Should still be cancellable
       const result = await env.brokerMaker.cancelRFQ(rfqId);
