@@ -4,7 +4,7 @@
 	import { formatUSD } from '$lib/utils/format';
 
 	const totalVolume = $derived(
-		$leaderboard.reduce((sum, a) => sum + parseFloat(a.volume), 0)
+		$leaderboard.reduce((sum, a) => sum + a.volume, 0)
 	);
 	const totalDeals = $derived(
 		$leaderboard.reduce((sum, a) => sum + a.deals, 0)

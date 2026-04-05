@@ -38,11 +38,14 @@ export const OFFER_STATUS = {
 	OPEN: 'open',
 	FILLED: 'filled',
 	CANCELLED: 'cancelled',
+	COUNTERED: 'countered',
 	EXPIRED: 'expired'
 } as const;
 
 export const RFQ_STATUS = {
 	ACTIVE: 'active',
+	FILLED: 'filled',
+	CANCELLED: 'cancelled',
 	QUOTED: 'quoted',
 	ACCEPTED: 'accepted',
 	EXPIRED: 'expired'
@@ -104,7 +107,7 @@ export interface Agent {
 	address: string;
 	name: string;
 	deals: number;
-	volume: string;
+	volume: number;
 	reputation: number;
 	lastActive: number;
 	isAgent: boolean;

@@ -21,6 +21,7 @@
     "vite": "^6.0.0"
   },
   "dependencies": {
+    "@brokerclaw/sdk": "workspace:*",
     "@vercel/analytics": "^1.6.1",
     "viem": "^2.21.0"
   },

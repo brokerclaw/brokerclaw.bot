@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
-import { REPUTATION_ABI } from "../contracts/abi.js";
+import { REPUTATION_ABI } from "@brokerclaw/sdk";
 import { formatReputation, abbreviateAddress, formatTokenAmount } from "../utils/format.js";
 
 export function registerReputationTools(server: McpServer): void {
@@ -19,12 +19,21 @@ export function registerReputationTools(server: McpServer): void {
       const addresses = getContractAddresses();
 
       try {
-        const rep = (await client.readContract({
-          address: addresses.reputation,
-          abi: REPUTATION_ABI,
-          functionName: "getReputation",
-          args: [agentAddress as `0x${string}`],
-        })) as any;
+        const [score, stats] = await Promise.all([
+          client.readContract({
+            address: addresses.reputation,
+            abi: REPUTATION_ABI,
+            functionName: "getScore",
+            args: [agentAddress as `0x${string}`],
+          }),
+          client.readContract({
+            address: addresses.reputation,
+            abi: REPUTATION_ABI,
+            functionName: "getAgentStats",
+            args: [agentAddress as `0x${string}`],
+          }),
+        ]);
+        const rep = { score, ...(stats as any) };
 
         return {
           content: [

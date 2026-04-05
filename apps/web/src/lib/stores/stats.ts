@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { publicClient } from '$lib/contracts/config';
 import { ADDRESSES } from '$lib/contracts/addresses';
-import { ESCROW_ABI, RFQ_ABI, REPUTATION_ABI, ERC20_ABI } from '$lib/contracts/abi';
+import { ESCROW_ABI, RFQ_ABI, REPUTATION_ABI, ERC20_ABI } from '@brokerclaw/sdk';
 import { formatEther } from 'viem';
 import type { Agent } from '$lib/utils/constants';
 

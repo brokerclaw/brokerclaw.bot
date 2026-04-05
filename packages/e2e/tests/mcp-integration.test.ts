@@ -24,7 +24,6 @@ class MockMCPServer {
       const sellAmount = BigInt(args.sellAmount);
       const buyAmount = BigInt(args.buyAmount);
       const deadline = args.deadline ? BigInt(args.deadline) : undefined;
-      const minFillPercent = args.minFillPercent ? BigInt(args.minFillPercent) : undefined;
 
       const result = await this.client.createOffer({
         sellToken,
@@ -32,7 +31,6 @@ class MockMCPServer {
         sellAmount,
         buyAmount,
         deadline,
-        minFillPercent,
       });
 
       return {
@@ -50,9 +48,8 @@ class MockMCPServer {
 
     this.tools.set("brokers_fill_offer", async (args) => {
       const offerId = BigInt(args.offerId);
-      const fillAmount = args.fillAmount ? BigInt(args.fillAmount) : undefined;
 
-      const result = await this.client.fillOffer({ offerId, fillAmount });
+      const result = await this.client.fillOffer({ offerId });
 
       return {
         content: [
@@ -150,8 +147,8 @@ class MockMCPServer {
             type: "text",
             text: JSON.stringify({
               agent: rep.agent,
-              totalDeals: rep.totalDeals.toString(),
-              successfulDeals: rep.successfulDeals.toString(),
+              completedDeals: rep.completedDeals.toString(),
+              cancelledDeals: rep.cancelledDeals.toString(),
               score: rep.score.toString(),
               totalVolume: rep.totalVolume.toString(),
             }),
@@ -350,7 +347,7 @@ describe("MCP Integration", () => {
 
       const data = JSON.parse(result.content[0].text);
       expect(data.agent.toLowerCase()).toBe(TEST_ACCOUNTS.maker.address.toLowerCase());
-      expect(data.totalDeals).toBeDefined();
+      expect(data.completedDeals).toBeDefined();
       expect(data.score).toBeDefined();
     });
 
@@ -378,7 +375,7 @@ describe("MCP Integration", () => {
       })) as { content: Array<{ type: string; text: string }> };
       const after = JSON.parse(afterResult.content[0].text);
 
-      expect(BigInt(after.totalDeals)).toBeGreaterThanOrEqual(BigInt(before.totalDeals));
+      expect(BigInt(after.completedDeals)).toBeGreaterThanOrEqual(BigInt(before.completedDeals));
     });
   });
 
@@ -452,7 +449,7 @@ describe("MCP Integration", () => {
         agent: TEST_ACCOUNTS.maker.address,
       })) as { content: Array<{ type: string; text: string }> };
       const rep = JSON.parse(repResult.content[0].text);
-      expect(BigInt(rep.totalDeals)).toBeGreaterThanOrEqual(1n);
+      expect(BigInt(rep.completedDeals)).toBeGreaterThanOrEqual(1n);
     });
   });
 });

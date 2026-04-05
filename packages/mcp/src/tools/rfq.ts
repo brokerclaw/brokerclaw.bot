@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getWalletClient, getContractAddresses, getWalletAddress } from "../contracts/client.js";
-import { RFQ_ENGINE_ABI } from "../contracts/abi.js";
+import { RFQ_ENGINE_ABI } from "@brokerclaw/sdk";
 import { formatTokenAmount, tokenSymbol, formatRfqStatus, formatQuoteStatus, abbreviateAddress } from "../utils/format.js";
 import { resolveToken, parseTokenAmount, getTokenDecimals, hoursToExpiry, requireWallet } from "../utils/validation.js";
 
@@ -91,10 +91,10 @@ export function registerRfqTools(server: McpServer): void {
         // Get all quotes
         const quotes = (await client.readContract({
           address: addresses.rfqEngine,
-          abi: RFQ_ENGINE_ABI,
+          abi: RFQ_ENGINE_ABI as any,
           functionName: "getQuotesForRequest",
           args: [id],
-        })) as readonly any[];
+        } as any)) as readonly any[];
 
         const requestInfo = [
           `RFQ #${request.id}`,

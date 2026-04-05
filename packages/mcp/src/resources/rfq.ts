@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPublicClient, getContractAddresses } from "../contracts/client.js";
-import { RFQ_ENGINE_ABI } from "../contracts/abi.js";
+import { RFQ_ENGINE_ABI } from "@brokerclaw/sdk";
 import { formatTokenAmount, tokenSymbol, abbreviateAddress, formatRfqStatus } from "../utils/format.js";
 
 export function registerRfqResource(server: McpServer): void {
@@ -18,10 +18,10 @@ export function registerRfqResource(server: McpServer): void {
       try {
         const requests = (await client.readContract({
           address: addresses.rfqEngine,
-          abi: RFQ_ENGINE_ABI,
+          abi: RFQ_ENGINE_ABI as any,
           functionName: "getActiveRequests",
           args: [0n, 50n],
-        })) as readonly any[];
+        } as any)) as readonly any[];
 
         if (requests.length === 0) {
           return {

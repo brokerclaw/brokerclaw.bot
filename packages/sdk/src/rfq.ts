@@ -40,7 +40,7 @@ export class RFQManager {
     validateRequestQuoteParams(params);
     const wallet = this.requireWallet();
 
-    const deadline = params.deadline ?? defaultRFQDeadline();
+    const expiry = params.deadline ?? defaultRFQDeadline();
 
     // Approve sellToken for the RFQ contract
     const allowance = await this.publicClient.readContract({
@@ -66,7 +66,7 @@ export class RFQManager {
       address: this.addresses.rfq,
       abi: BrokerRFQABI,
       functionName: "requestQuote",
-      args: [params.sellToken, params.buyToken, params.sellAmount, deadline],
+      args: [params.sellToken, params.sellAmount, params.buyToken, expiry],
       chain: wallet.chain,
       account: wallet.account,
     });
@@ -92,27 +92,27 @@ export class RFQManager {
   /** Submit a quote for an existing RFQ */
   async submitQuote(params: SubmitQuoteParams): Promise<SubmitQuoteResult> {
     validateSubmitQuoteParams(params);
-    validateOfferId(params.rfqId);
+    validateOfferId(params.requestId);
     const wallet = this.requireWallet();
 
     const expiry = params.expiry ?? defaultQuoteExpiry();
 
-    // Read the RFQ to know the buyToken and approve it
-    const rfq = await this.getRFQ(params.rfqId);
+    // Read the request to know the buyToken and approve it
+    const request = await this.getRequest(params.requestId);
 
     const allowance = await this.publicClient.readContract({
-      address: rfq.buyToken,
+      address: request.buyToken,
       abi: ERC20ABI,
       functionName: "allowance",
       args: [wallet.account.address, this.addresses.rfq],
     });
 
-    if ((allowance as bigint) < params.buyAmount) {
+    if ((allowance as bigint) < params.amountB) {
       const approveHash = await wallet.writeContract({
-        address: rfq.buyToken,
+        address: request.buyToken,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [this.addresses.rfq, params.buyAmount],
+        args: [this.addresses.rfq, params.amountB],
         chain: wallet.chain,
         account: wallet.account,
       });
@@ -123,7 +123,7 @@ export class RFQManager {
       address: this.addresses.rfq,
       abi: BrokerRFQABI,
       functionName: "submitQuote",
-      args: [params.rfqId, params.buyAmount, expiry],
+      args: [params.requestId, params.amountB, expiry],
       chain: wallet.chain,
       account: wallet.account,
     });
@@ -134,8 +134,9 @@ export class RFQManager {
     for (const log of receipt.logs) {
       try {
         if (log.address.toLowerCase() === this.addresses.rfq.toLowerCase()) {
-          if (log.topics[1]) {
-            quoteId = BigInt(log.topics[1]);
+          // QuoteSubmitted: topics[2] is quoteId
+          if (log.topics[2]) {
+            quoteId = BigInt(log.topics[2]);
           }
         }
       } catch {
@@ -159,20 +160,37 @@ export class RFQManager {
       account: wallet.account,
     });
 
-    await this.publicClient.waitForTransactionReceipt({ hash });
-    return { hash, quoteId: params.quoteId };
+    const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
+
+    // Parse escrowOfferId from QuoteAccepted event logs
+    let escrowOfferId = 0n;
+    for (const log of receipt.logs) {
+      try {
+        if (log.address.toLowerCase() === this.addresses.rfq.toLowerCase()) {
+          // QuoteAccepted has escrowOfferId as non-indexed data
+          // topics[1] = requestId, topics[2] = quoteId
+          if (log.data && log.data !== "0x") {
+            escrowOfferId = BigInt(log.data.slice(0, 66));
+          }
+        }
+      } catch {
+        // skip
+      }
+    }
+
+    return { hash, quoteId: params.quoteId, escrowOfferId };
   }
 
-  /** Cancel an active RFQ (only the requester can cancel) */
-  async cancelRFQ(rfqId: bigint): Promise<TransactionResult> {
-    validateOfferId(rfqId);
+  /** Cancel an active request (only the requester can cancel) */
+  async cancelRequest(requestId: bigint): Promise<TransactionResult> {
+    validateOfferId(requestId);
     const wallet = this.requireWallet();
 
     const hash = await wallet.writeContract({
       address: this.addresses.rfq,
       abi: BrokerRFQABI,
-      functionName: "cancelRFQ",
-      args: [rfqId],
+      functionName: "cancelRequest",
+      args: [requestId],
       chain: wallet.chain,
       account: wallet.account,
     });
@@ -181,27 +199,45 @@ export class RFQManager {
     return { hash };
   }
 
-  /** Get a single RFQ by ID */
-  async getRFQ(rfqId: bigint): Promise<RFQRequest> {
+  /** @deprecated Use cancelRequest instead */
+  async cancelRFQ(rfqId: bigint): Promise<TransactionResult> {
+    return this.cancelRequest(rfqId);
+  }
+
+  /** Get a single request by ID */
+  async getRequest(requestId: bigint): Promise<RFQRequest> {
     const result = await this.publicClient.readContract({
       address: this.addresses.rfq,
       abi: BrokerRFQABI,
-      functionName: "rfqs",
-      args: [rfqId],
+      functionName: "getRequest",
+      args: [requestId],
     });
 
-    const r = result as readonly [bigint, Address, Address, Address, bigint, bigint, number, bigint];
+    const r = result as {
+      requester: Address;
+      tokenA: Address;
+      amountA: bigint;
+      tokenB: Address;
+      expiry: bigint;
+      status: number;
+      acceptedQuoteId: bigint;
+    };
 
     return {
-      id: r[0],
-      requester: r[1],
-      sellToken: r[2],
-      buyToken: r[3],
-      sellAmount: r[4],
-      deadline: r[5],
-      status: r[6] as RFQStatus,
-      createdAt: r[7],
+      id: requestId,
+      requester: r.requester,
+      sellToken: r.tokenA,
+      buyToken: r.tokenB,
+      sellAmount: r.amountA,
+      deadline: r.expiry,
+      status: r.status as RFQStatus,
+      acceptedQuoteId: r.acceptedQuoteId,
     };
+  }
+
+  /** @deprecated Use getRequest instead */
+  async getRFQ(rfqId: bigint): Promise<RFQRequest> {
+    return this.getRequest(rfqId);
   }
 
   /** Get a single quote by ID */
@@ -209,37 +245,46 @@ export class RFQManager {
     const result = await this.publicClient.readContract({
       address: this.addresses.rfq,
       abi: BrokerRFQABI,
-      functionName: "quotes",
+      functionName: "getQuote",
       args: [quoteId],
     });
 
-    const r = result as readonly [bigint, bigint, Address, bigint, bigint, boolean, bigint];
+    const r = result as {
+      requestId: bigint;
+      quoter: Address;
+      amountB: bigint;
+      quoteExpiry: bigint;
+      status: number;
+    };
 
     return {
-      id: r[0],
-      rfqId: r[1],
-      quoter: r[2],
-      buyAmount: r[3],
-      expiry: r[4],
-      accepted: r[5],
-      createdAt: r[6],
+      id: quoteId,
+      requestId: r.requestId,
+      quoter: r.quoter,
+      amountB: r.amountB,
+      quoteExpiry: r.quoteExpiry,
+      status: r.status,
     };
   }
 
-  /** List quotes, optionally filtered by RFQ ID or quoter */
-  async listQuotes(params: ListQuotesParams = {}): Promise<Quote[]> {
-    const offset = params.offset ?? 0n;
-    const limit = params.limit ?? 20n;
+  /** Get all quote IDs for a given request */
+  async getRequestQuotes(requestId: bigint): Promise<readonly bigint[]> {
+    const result = await this.publicClient.readContract({
+      address: this.addresses.rfq,
+      abi: BrokerRFQABI,
+      functionName: "getRequestQuotes",
+      args: [requestId],
+    });
 
+    return result as readonly bigint[];
+  }
+
+  /** List quotes, optionally filtered by request ID or quoter */
+  async listQuotes(params: ListQuotesParams = {}): Promise<Quote[]> {
     let quoteIds: readonly bigint[];
 
-    if (params.rfqId !== undefined) {
-      quoteIds = (await this.publicClient.readContract({
-        address: this.addresses.rfq,
-        abi: BrokerRFQABI,
-        functionName: "getQuotesByRFQ",
-        args: [params.rfqId, offset, limit],
-      })) as readonly bigint[];
+    if (params.requestId !== undefined) {
+      quoteIds = await this.getRequestQuotes(params.requestId);
     } else {
       const totalCount = (await this.publicClient.readContract({
         address: this.addresses.rfq,
@@ -247,9 +292,11 @@ export class RFQManager {
         functionName: "quoteCount",
       })) as bigint;
 
+      const offset = params.offset ?? 0n;
+      const limit = params.limit ?? 20n;
       const start = Number(offset) + 1;
       const end = Math.min(start + Number(limit), Number(totalCount) + 1);
-      quoteIds = Array.from({ length: end - start }, (_, i) => BigInt(start + i));
+      quoteIds = Array.from({ length: Math.max(0, end - start) }, (_, i) => BigInt(start + i));
     }
 
     const quotes = await Promise.all(quoteIds.map((id) => this.getQuote(id)));

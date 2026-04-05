@@ -24,8 +24,6 @@ import type {
   Quote,
   RFQRequest,
   Reputation,
-  LeaderboardEntry,
-  ProtocolStats,
   FeeConfig,
 } from "./types.js";
 
@@ -158,14 +156,24 @@ export class BrokerClient {
     return this.rfqManager.acceptQuote(params);
   }
 
-  /** Cancel an RFQ */
-  async cancelRFQ(rfqId: bigint): Promise<TransactionResult> {
-    return this.rfqManager.cancelRFQ(rfqId);
+  /** Cancel a request */
+  async cancelRequest(requestId: bigint): Promise<TransactionResult> {
+    return this.rfqManager.cancelRequest(requestId);
   }
 
-  /** Get a single RFQ by ID */
+  /** @deprecated Use cancelRequest instead */
+  async cancelRFQ(rfqId: bigint): Promise<TransactionResult> {
+    return this.rfqManager.cancelRequest(rfqId);
+  }
+
+  /** Get a single request by ID */
+  async getRequest(requestId: bigint): Promise<RFQRequest> {
+    return this.rfqManager.getRequest(requestId);
+  }
+
+  /** @deprecated Use getRequest instead */
   async getRFQ(rfqId: bigint): Promise<RFQRequest> {
-    return this.rfqManager.getRFQ(rfqId);
+    return this.rfqManager.getRequest(rfqId);
   }
 
   /** Get a single quote by ID */
@@ -183,15 +191,5 @@ export class BrokerClient {
   /** Get reputation for a specific agent */
   async getReputation(agent: Address): Promise<Reputation> {
     return this.reputationManager.getReputation(agent);
-  }
-
-  /** Get the leaderboard of top agents */
-  async getLeaderboard(offset?: bigint, limit?: bigint): Promise<LeaderboardEntry[]> {
-    return this.reputationManager.getLeaderboard(offset, limit);
-  }
-
-  /** Get protocol-wide statistics */
-  async getStats(): Promise<ProtocolStats> {
-    return this.reputationManager.getStats();
   }
 }

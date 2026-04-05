@@ -17,7 +17,6 @@ import type {
 import {
   validateCreateOfferParams,
   validateOfferId,
-  validateAddress,
   validatePositiveAmount,
 } from "./utils/validation.js";
 import { defaultDeadline } from "./utils/format.js";
@@ -41,8 +40,7 @@ export class OfferManager {
     validateCreateOfferParams(params);
     const wallet = this.requireWallet();
 
-    const deadline = params.deadline ?? defaultDeadline();
-    const minFillPercent = params.minFillPercent ?? 10000n;
+    const expiry = params.deadline ?? defaultDeadline();
 
     // Ensure approval
     const allowance = await this.publicClient.readContract({
@@ -69,12 +67,11 @@ export class OfferManager {
       abi: BrokerEscrowABI,
       functionName: "createOffer",
       args: [
-        params.sellToken,
-        params.buyToken,
-        params.sellAmount,
-        params.buyAmount,
-        minFillPercent,
-        deadline,
+        params.sellToken,   // tokenA
+        params.sellAmount,   // amountA
+        params.buyToken,     // tokenB
+        params.buyAmount,    // amountB
+        expiry,
       ],
       chain: wallet.chain,
       account: wallet.account,
@@ -105,10 +102,8 @@ export class OfferManager {
     validateOfferId(params.offerId);
     const wallet = this.requireWallet();
 
-    // Read the offer to know buyToken and amount
+    // Read the offer to know buyToken and amount for approval
     const offer = await this.getOffer(params.offerId);
-    const fillAmount = params.fillAmount ?? offer.buyAmount;
-    validatePositiveAmount(fillAmount, "fillAmount");
 
     // Ensure approval of buyToken
     const allowance = await this.publicClient.readContract({
@@ -118,12 +113,12 @@ export class OfferManager {
       args: [wallet.account.address, this.addresses.escrow],
     });
 
-    if ((allowance as bigint) < fillAmount) {
+    if ((allowance as bigint) < offer.buyAmount) {
       const approveHash = await wallet.writeContract({
         address: offer.buyToken,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [this.addresses.escrow, fillAmount],
+        args: [this.addresses.escrow, offer.buyAmount],
         chain: wallet.chain,
         account: wallet.account,
       });
@@ -134,7 +129,7 @@ export class OfferManager {
       address: this.addresses.escrow,
       abi: BrokerEscrowABI,
       functionName: "fillOffer",
-      args: [params.offerId, fillAmount],
+      args: [params.offerId],
       chain: wallet.chain,
       account: wallet.account,
     });
@@ -164,28 +159,25 @@ export class OfferManager {
   /** Create a counter-offer referencing an existing offer */
   async counterOffer(params: CounterOfferParams): Promise<CounterOfferResult> {
     validateOfferId(params.originalOfferId);
-    validateAddress(params.sellToken, "sellToken");
-    validateAddress(params.buyToken, "buyToken");
-    validatePositiveAmount(params.sellAmount, "sellAmount");
-    validatePositiveAmount(params.buyAmount, "buyAmount");
+    validatePositiveAmount(params.newAmountB, "newAmountB");
     const wallet = this.requireWallet();
 
-    const deadline = params.deadline ?? defaultDeadline();
+    // Get original offer to find which token to approve (counter-offerer deposits tokenB)
+    const offer = await this.getOffer(params.originalOfferId);
 
-    // Ensure approval
     const allowance = await this.publicClient.readContract({
-      address: params.sellToken,
+      address: offer.buyToken,
       abi: ERC20ABI,
       functionName: "allowance",
       args: [wallet.account.address, this.addresses.escrow],
     });
 
-    if ((allowance as bigint) < params.sellAmount) {
+    if ((allowance as bigint) < params.newAmountB) {
       const approveHash = await wallet.writeContract({
-        address: params.sellToken,
+        address: offer.buyToken,
         abi: ERC20ABI,
         functionName: "approve",
-        args: [this.addresses.escrow, params.sellAmount],
+        args: [this.addresses.escrow, params.newAmountB],
         chain: wallet.chain,
         account: wallet.account,
       });
@@ -198,11 +190,7 @@ export class OfferManager {
       functionName: "counterOffer",
       args: [
         params.originalOfferId,
-        params.sellToken,
-        params.buyToken,
-        params.sellAmount,
-        params.buyAmount,
-        deadline,
+        params.newAmountB,
       ],
       chain: wallet.chain,
       account: wallet.account,
@@ -214,8 +202,9 @@ export class OfferManager {
     for (const log of receipt.logs) {
       try {
         if (log.address.toLowerCase() === this.addresses.escrow.toLowerCase()) {
-          // CounterOffer event: topics[2] is the counterOfferId
-          if (log.topics[2]) {
+          // CounterOfferCreated has 4 topics: [sig, originalOfferId, counterOfferId, counterParty]
+          // OfferCreated has 3 topics: [sig, offerId, maker] — topics[2] is maker address, not an ID
+          if (log.topics.length === 4 && log.topics[2]) {
             offerId = BigInt(log.topics[2]);
           }
         }
@@ -234,92 +223,102 @@ export class OfferManager {
     const result = await this.publicClient.readContract({
       address: this.addresses.escrow,
       abi: BrokerEscrowABI,
-      functionName: "offers",
+      functionName: "getOffer",
       args: [offerId],
     });
 
-    const r = result as readonly [
-      bigint, Address, Address, Address, bigint, bigint, bigint, bigint, number, Address, bigint, bigint
-    ];
+    const r = result as {
+      maker: Address;
+      taker: Address;
+      tokenA: Address;
+      tokenB: Address;
+      amountA: bigint;
+      amountB: bigint;
+      expiry: bigint;
+      status: number;
+      originalOfferId: bigint;
+    };
 
     return {
-      id: r[0],
-      maker: r[1],
-      sellToken: r[2],
-      buyToken: r[3],
-      sellAmount: r[4],
-      buyAmount: r[5],
-      minFillPercent: r[6],
-      deadline: r[7],
-      status: r[8] as OfferStatus,
-      filler: r[9],
-      filledAt: r[10],
-      createdAt: r[11],
+      id: offerId,
+      maker: r.maker,
+      taker: r.taker,
+      sellToken: r.tokenA,
+      buyToken: r.tokenB,
+      sellAmount: r.amountA,
+      buyAmount: r.amountB,
+      deadline: r.expiry,
+      status: r.status as OfferStatus,
+      originalOfferId: r.originalOfferId,
     };
   }
 
-  /** List offers with optional filters */
+  /** List offers with optional filters. Iterates from 1 to offerCount. */
   async listOffers(params: ListOffersParams = {}): Promise<Offer[]> {
     const offset = params.offset ?? 0n;
     const limit = params.limit ?? 20n;
 
-    let offerIds: readonly bigint[];
+    // Fetch all offers by iterating from offset
+    const totalCount = (await this.publicClient.readContract({
+      address: this.addresses.escrow,
+      abi: BrokerEscrowABI,
+      functionName: "offerCount",
+    })) as bigint;
 
-    if (params.maker) {
-      validateAddress(params.maker, "maker");
-      offerIds = (await this.publicClient.readContract({
-        address: this.addresses.escrow,
-        abi: BrokerEscrowABI,
-        functionName: "getOffersByMaker",
-        args: [params.maker, offset, limit],
-      })) as readonly bigint[];
-    } else if (params.sellToken) {
-      validateAddress(params.sellToken, "sellToken");
-      offerIds = (await this.publicClient.readContract({
-        address: this.addresses.escrow,
-        abi: BrokerEscrowABI,
-        functionName: "getOffersByToken",
-        args: [params.sellToken, offset, limit],
-      })) as readonly bigint[];
-    } else {
-      // Fetch all offers by iterating from offset
-      const totalCount = (await this.publicClient.readContract({
-        address: this.addresses.escrow,
-        abi: BrokerEscrowABI,
-        functionName: "offerCount",
-      })) as bigint;
-
-      const start = Number(offset) + 1; // offers are 1-indexed
-      const end = Math.min(start + Number(limit), Number(totalCount) + 1);
-      offerIds = Array.from({ length: end - start }, (_, i) => BigInt(start + i));
-    }
+    const start = Number(offset) + 1; // offers are 1-indexed
+    const end = Math.min(start + Number(limit), Number(totalCount) + 1);
+    const offerIds = Array.from({ length: Math.max(0, end - start) }, (_, i) => BigInt(start + i));
 
     const offers = await Promise.all(
       offerIds.map((id) => this.getOffer(id))
     );
 
-    // Apply status filter if provided
-    if (params.status !== undefined) {
-      return offers.filter((o) => o.status === params.status);
+    // Apply filters client-side
+    let filtered = offers;
+
+    if (params.maker) {
+      filtered = filtered.filter(
+        (o) => o.maker.toLowerCase() === params.maker!.toLowerCase()
+      );
     }
 
-    return offers;
+    if (params.sellToken) {
+      filtered = filtered.filter(
+        (o) => o.sellToken.toLowerCase() === params.sellToken!.toLowerCase()
+      );
+    }
+
+    if (params.buyToken) {
+      filtered = filtered.filter(
+        (o) => o.buyToken.toLowerCase() === params.buyToken!.toLowerCase()
+      );
+    }
+
+    if (params.status !== undefined) {
+      filtered = filtered.filter((o) => o.status === params.status);
+    }
+
+    return filtered;
   }
 
   /** Get the protocol fee configuration */
   async getFeeConfig(): Promise<FeeConfig> {
-    const result = await this.publicClient.readContract({
-      address: this.addresses.escrow,
-      abi: BrokerEscrowABI,
-      functionName: "feeConfig",
-    });
+    const [feeBps, treasury] = await Promise.all([
+      this.publicClient.readContract({
+        address: this.addresses.escrow,
+        abi: BrokerEscrowABI,
+        functionName: "feeBps",
+      }) as Promise<bigint>,
+      this.publicClient.readContract({
+        address: this.addresses.escrow,
+        abi: BrokerEscrowABI,
+        functionName: "treasury",
+      }) as Promise<Address>,
+    ]);
 
-    const r = result as readonly [bigint, bigint, bigint, Address];
     return {
-      feeBps: r[0],
-      burnBps: r[1],
-      treasuryBps: r[2],
-      treasury: r[3],
+      feeBps,
+      treasury,
     };
   }
 }

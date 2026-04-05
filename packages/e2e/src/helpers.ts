@@ -90,7 +90,6 @@ export async function createStandardOffer(
     sellAmount?: bigint;
     buyAmount?: bigint;
     deadline?: bigint;
-    minFillPercent?: bigint;
   } = {}
 ): Promise<bigint> {
   const maker = options.maker ?? env.brokerMaker;
@@ -108,7 +107,6 @@ export async function createStandardOffer(
     sellAmount,
     buyAmount,
     deadline,
-    minFillPercent: options.minFillPercent,
   });
 
   return result.offerId;
@@ -161,7 +159,7 @@ export async function createAndFillOffer(
   });
 
   const fillResult = await env.brokerTaker.fillOffer({ offerId });
-  return { offerId, fillHash: fillResult.hash };
+  return { offerId, fillHash: fillResult.hash as string };
 }
 
 /**
@@ -210,16 +208,12 @@ export function calculateExpectedFee(
 }
 
 /**
- * Calculate the treasury and burn portions of a fee.
+ * The full fee goes to the treasury (no more burn/treasury split).
  */
 export function splitFee(
-  fee: bigint,
-  burnBps: bigint = 3333n,
-  treasuryBps: bigint = 6667n
-): { burnAmount: bigint; treasuryAmount: bigint } {
-  const burnAmount = (fee * burnBps) / 10000n;
-  const treasuryAmount = (fee * treasuryBps) / 10000n;
-  return { burnAmount, treasuryAmount };
+  fee: bigint
+): { treasuryAmount: bigint } {
+  return { treasuryAmount: fee };
 }
 
 /**

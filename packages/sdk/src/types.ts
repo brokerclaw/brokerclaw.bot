@@ -27,12 +27,17 @@ export enum OfferStatus {
 }
 
 export enum RFQStatus {
-  Pending = 0,
-  Quoted = 1,
-  Accepted = 2,
-  Settled = 3,
-  Expired = 4,
-  Cancelled = 5,
+  Open = 0,
+  Filled = 1,
+  Expired = 2,
+  Cancelled = 3,
+}
+
+export enum QuoteStatus {
+  Active = 0,
+  Accepted = 1,
+  Expired = 2,
+  Rejected = 3,
 }
 
 // ── Offer Types ────────────────────────────────────────────────
@@ -40,16 +45,14 @@ export enum RFQStatus {
 export interface Offer {
   id: bigint;
   maker: Address;
+  taker: Address;
   sellToken: Address;
   buyToken: Address;
   sellAmount: bigint;
   buyAmount: bigint;
-  minFillPercent: bigint;
   deadline: bigint;
   status: OfferStatus;
-  filler: Address;
-  filledAt: bigint;
-  createdAt: bigint;
+  originalOfferId: bigint;
 }
 
 export interface CreateOfferParams {
@@ -57,25 +60,17 @@ export interface CreateOfferParams {
   buyToken: Address;
   sellAmount: bigint;
   buyAmount: bigint;
-  /** Minimum fill percentage in basis points (100 = 1%). Default: 10000 (100%) */
-  minFillPercent?: bigint;
   /** Unix timestamp deadline. Default: 24 hours from now */
   deadline?: bigint;
 }
 
 export interface FillOfferParams {
   offerId: bigint;
-  /** Amount of buyToken to fill. If omitted, fills the full amount. */
-  fillAmount?: bigint;
 }
 
 export interface CounterOfferParams {
   originalOfferId: bigint;
-  sellToken: Address;
-  buyToken: Address;
-  sellAmount: bigint;
-  buyAmount: bigint;
-  deadline?: bigint;
+  newAmountB: bigint;
 }
 
 export interface ListOffersParams {
@@ -97,17 +92,16 @@ export interface RFQRequest {
   sellAmount: bigint;
   deadline: bigint;
   status: RFQStatus;
-  createdAt: bigint;
+  acceptedQuoteId: bigint;
 }
 
 export interface Quote {
   id: bigint;
-  rfqId: bigint;
+  requestId: bigint;
   quoter: Address;
-  buyAmount: bigint;
-  expiry: bigint;
-  accepted: boolean;
-  createdAt: bigint;
+  amountB: bigint;
+  quoteExpiry: bigint;
+  status: number;
 }
 
 export interface RequestQuoteParams {
@@ -119,8 +113,8 @@ export interface RequestQuoteParams {
 }
 
 export interface SubmitQuoteParams {
-  rfqId: bigint;
-  buyAmount: bigint;
+  requestId: bigint;
+  amountB: bigint;
   /** Quote expiry. Default: 30 minutes from now */
   expiry?: bigint;
 }
@@ -129,8 +123,13 @@ export interface AcceptQuoteParams {
   quoteId: bigint;
 }
 
+export interface AcceptQuoteResult extends TransactionResult {
+  quoteId: bigint;
+  escrowOfferId: bigint;
+}
+
 export interface ListQuotesParams {
-  rfqId?: bigint;
+  requestId?: bigint;
   quoter?: Address;
   offset?: bigint;
   limit?: bigint;
@@ -140,12 +139,12 @@ export interface ListQuotesParams {
 
 export interface Reputation {
   agent: Address;
-  totalDeals: bigint;
-  successfulDeals: bigint;
-  totalVolume: bigint;
-  avgSettlementTime: bigint;
   score: bigint;
-  lastUpdated: bigint;
+  completedDeals: bigint;
+  cancelledDeals: bigint;
+  totalVolume: bigint;
+  firstDealTimestamp: bigint;
+  lastDealTimestamp: bigint;
 }
 
 export interface LeaderboardEntry {
@@ -190,15 +189,9 @@ export interface SubmitQuoteResult extends TransactionResult {
   quoteId: bigint;
 }
 
-export interface AcceptQuoteResult extends TransactionResult {
-  quoteId: bigint;
-}
-
 // ── Fee Types ──────────────────────────────────────────────────
 
 export interface FeeConfig {
   feeBps: bigint;
-  burnBps: bigint;
-  treasuryBps: bigint;
   treasury: Address;
 }

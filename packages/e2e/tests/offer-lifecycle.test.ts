@@ -47,18 +47,6 @@ describe("Offer Lifecycle", () => {
       expect(offer.deadline).toBe(deadline);
     });
 
-    it("should create an offer with default minFillPercent of 10000 (100%)", async () => {
-      const offerId = await createStandardOffer(env);
-      const offer = await env.brokerMaker.getOffer(offerId);
-      expect(offer.minFillPercent).toBe(10000n);
-    });
-
-    it("should create an offer with custom minFillPercent", async () => {
-      const offerId = await createStandardOffer(env, { minFillPercent: 5000n });
-      const offer = await env.brokerMaker.getOffer(offerId);
-      expect(offer.minFillPercent).toBe(5000n);
-    });
-
     it("should deduct sellToken from maker's balance", async () => {
       const balanceBefore = await getBalance(env.publicClient, env.tokenA, TEST_ACCOUNTS.maker.address);
       await createStandardOffer(env);
@@ -97,7 +85,7 @@ describe("Offer Lifecycle", () => {
 
       const offer = await env.brokerMaker.getOffer(offerId);
       expect(offer.status).toBe(OfferStatus.Filled);
-      expect(offer.filler.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
+      expect(offer.taker.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
     });
 
     it("should transfer tokens correctly on fill", async () => {
@@ -134,12 +122,12 @@ describe("Offer Lifecycle", () => {
       ).rejects.toThrow();
     });
 
-    it("should record the fill timestamp", async () => {
+    it("should record the taker address on fill", async () => {
       const offerId = await createStandardOffer(env);
       await env.brokerTaker.fillOffer({ offerId });
 
       const offer = await env.brokerMaker.getOffer(offerId);
-      expect(offer.filledAt).toBeGreaterThan(0n);
+      expect(offer.taker.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
     });
   });
 
@@ -209,8 +197,7 @@ describe("Offer Lifecycle", () => {
       // 4. Verify offer is filled
       offer = await env.brokerMaker.getOffer(result.offerId);
       expect(offer.status).toBe(OfferStatus.Filled);
-      expect(offer.filler.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
-      expect(offer.filledAt).toBeGreaterThan(0n);
+      expect(offer.taker.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
     });
 
     it("should handle create → cancel flow", async () => {

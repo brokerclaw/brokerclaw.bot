@@ -40,7 +40,7 @@ describe("RFQ Flow", () => {
       expect(rfq.sellToken.toLowerCase()).toBe(env.tokenA.toLowerCase());
       expect(rfq.buyToken.toLowerCase()).toBe(env.tokenB.toLowerCase());
       expect(rfq.sellAmount).toBe(AMOUNTS.standard);
-      expect(rfq.status).toBe(RFQStatus.Pending);
+      expect(rfq.status).toBe(RFQStatus.Open);
     });
 
     it("should increment RFQ counter", async () => {
@@ -67,8 +67,8 @@ describe("RFQ Flow", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
       const result = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
@@ -76,10 +76,10 @@ describe("RFQ Flow", () => {
       expect(result.quoteId).toBeGreaterThan(0n);
 
       const quote = await env.brokerTaker.getQuote(result.quoteId);
-      expect(quote.rfqId).toBe(rfqId);
+      expect(quote.requestId).toBe(rfqId);
       expect(quote.quoter.toLowerCase()).toBe(TEST_ACCOUNTS.taker.address.toLowerCase());
-      expect(quote.buyAmount).toBe(AMOUNTS.half);
-      expect(quote.accepted).toBe(false);
+      expect(quote.amountB).toBe(AMOUNTS.half);
+      expect(quote.status).toBe(0);
     });
 
     it("should allow multiple quotes for the same RFQ", async () => {
@@ -87,20 +87,20 @@ describe("RFQ Flow", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
       const quote1 = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
       const quote2 = await env.brokerAgent3.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half + 10n * 10n ** 18n, // Better price
+        requestId: rfqId,
+        amountB: AMOUNTS.half + 10n * 10n ** 18n, // Better price
         expiry,
       });
 
       expect(quote1.quoteId).not.toBe(quote2.quoteId);
 
-      const quotes = await env.brokerMaker.listQuotes({ rfqId });
+      const quotes = await env.brokerMaker.listQuotes({ requestId: rfqId });
       expect(quotes.length).toBe(2);
     });
 
@@ -109,8 +109,8 @@ describe("RFQ Flow", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
       const result = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
@@ -124,19 +124,20 @@ describe("RFQ Flow", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
       const { quoteId } = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
       const result = await env.brokerMaker.acceptQuote({ quoteId });
       expect(result.hash).toBeDefined();
+      expect(result.escrowOfferId).toBeDefined();
 
       const quote = await env.brokerMaker.getQuote(quoteId);
-      expect(quote.accepted).toBe(true);
+      expect(quote.status).not.toBe(0);
 
       const rfq = await env.brokerMaker.getRFQ(rfqId);
-      expect(rfq.status).toBe(RFQStatus.Accepted);
+      expect(rfq.status).toBe(RFQStatus.Filled);
     });
 
     it("should settle tokens on quote acceptance", async () => {
@@ -150,12 +151,15 @@ describe("RFQ Flow", () => {
       );
 
       const { quoteId } = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
-      await env.brokerMaker.acceptQuote({ quoteId });
+      const { escrowOfferId } = await env.brokerMaker.acceptQuote({ quoteId });
+
+      // acceptQuote creates an escrow offer; taker must fill it to settle
+      await env.brokerTaker.fillOffer({ offerId: escrowOfferId });
 
       // Maker should receive buyToken (tokenB)
       const makerBalanceB_after = await getBalance(
@@ -171,8 +175,8 @@ describe("RFQ Flow", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
       const { quoteId } = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
@@ -188,8 +192,8 @@ describe("RFQ Flow", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
       const { quoteId } = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqId,
+        amountB: AMOUNTS.half,
         expiry,
       });
 
@@ -213,29 +217,29 @@ describe("RFQ Flow", () => {
 
       // 2. Verify RFQ is pending
       let rfq = await env.brokerMaker.getRFQ(rfqResult.rfqId);
-      expect(rfq.status).toBe(RFQStatus.Pending);
+      expect(rfq.status).toBe(RFQStatus.Open);
 
       // 3. Taker submits a quote: offering 50 tokenB
       const quoteResult = await env.brokerTaker.submitQuote({
-        rfqId: rfqResult.rfqId,
-        buyAmount: AMOUNTS.half,
+        requestId: rfqResult.rfqId,
+        amountB: AMOUNTS.half,
         expiry: now + 1800n,
       });
 
       // 4. Verify quote exists
       const quote = await env.brokerMaker.getQuote(quoteResult.quoteId);
-      expect(quote.rfqId).toBe(rfqResult.rfqId);
-      expect(quote.accepted).toBe(false);
+      expect(quote.requestId).toBe(rfqResult.rfqId);
+      expect(quote.status).toBe(0);
 
       // 5. Maker accepts the quote
       await env.brokerMaker.acceptQuote({ quoteId: quoteResult.quoteId });
 
       // 6. Verify settlement
       rfq = await env.brokerMaker.getRFQ(rfqResult.rfqId);
-      expect(rfq.status).toBe(RFQStatus.Accepted);
+      expect(rfq.status).toBe(RFQStatus.Filled);
 
       const acceptedQuote = await env.brokerMaker.getQuote(quoteResult.quoteId);
-      expect(acceptedQuote.accepted).toBe(true);
+      expect(acceptedQuote.status).not.toBe(0);
     });
 
     it("should handle competitive quoting (best price wins)", async () => {
@@ -244,15 +248,15 @@ describe("RFQ Flow", () => {
 
       // Taker offers 50 tokenB
       const quote1 = await env.brokerTaker.submitQuote({
-        rfqId,
-        buyAmount: 50n * 10n ** 18n,
+        requestId: rfqId,
+        amountB: 50n * 10n ** 18n,
         expiry,
       });
 
       // Agent3 offers 55 tokenB (better price for requester)
       const quote2 = await env.brokerAgent3.submitQuote({
-        rfqId,
-        buyAmount: 55n * 10n ** 18n,
+        requestId: rfqId,
+        amountB: 55n * 10n ** 18n,
         expiry,
       });
 
@@ -261,8 +265,9 @@ describe("RFQ Flow", () => {
 
       const q1 = await env.brokerMaker.getQuote(quote1.quoteId);
       const q2 = await env.brokerMaker.getQuote(quote2.quoteId);
-      expect(q1.accepted).toBe(false);
-      expect(q2.accepted).toBe(true);
+      // Contract rejects all other active quotes when one is accepted
+      expect(q1.status).toBe(3); // Rejected
+      expect(q2.status).toBe(1); // Accepted
     });
   });
 
@@ -292,8 +297,8 @@ describe("RFQ Flow", () => {
       const expiry = await futureTimestamp(env.publicClient, 1800n);
       await expect(
         env.brokerTaker.submitQuote({
-          rfqId,
-          buyAmount: AMOUNTS.half,
+          requestId: rfqId,
+          amountB: AMOUNTS.half,
           expiry,
         })
       ).rejects.toThrow();
@@ -305,23 +310,23 @@ describe("RFQ Flow", () => {
       const rfqId = await createStandardRFQ(env);
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
-      await env.brokerTaker.submitQuote({ rfqId, buyAmount: AMOUNTS.half, expiry });
-      await env.brokerAgent3.submitQuote({ rfqId, buyAmount: AMOUNTS.standard, expiry });
+      await env.brokerTaker.submitQuote({ requestId: rfqId, amountB: AMOUNTS.half, expiry });
+      await env.brokerAgent3.submitQuote({ requestId: rfqId, amountB: AMOUNTS.standard, expiry });
 
-      const quotes = await env.brokerMaker.listQuotes({ rfqId });
+      const quotes = await env.brokerMaker.listQuotes({ requestId: rfqId });
       expect(quotes.length).toBe(2);
-      expect(quotes.every((q) => q.rfqId === rfqId)).toBe(true);
+      expect(quotes.every((q) => q.requestId === rfqId)).toBe(true);
     });
 
     it("should filter quotes by quoter", async () => {
       const rfqId = await createStandardRFQ(env);
       const expiry = await futureTimestamp(env.publicClient, 1800n);
 
-      await env.brokerTaker.submitQuote({ rfqId, buyAmount: AMOUNTS.half, expiry });
-      await env.brokerAgent3.submitQuote({ rfqId, buyAmount: AMOUNTS.standard, expiry });
+      await env.brokerTaker.submitQuote({ requestId: rfqId, amountB: AMOUNTS.half, expiry });
+      await env.brokerAgent3.submitQuote({ requestId: rfqId, amountB: AMOUNTS.standard, expiry });
 
       const quotes = await env.brokerMaker.listQuotes({
-        rfqId,
+        requestId: rfqId,
         quoter: TEST_ACCOUNTS.taker.address,
       });
 
