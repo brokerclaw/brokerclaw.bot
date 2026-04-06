@@ -12,6 +12,13 @@
     "brokers-bot": {
       "type": "sse",
       "url": "http://localhost:3001/sse"
+    },
+    "buffer": {
+      "type": "streamable-http",
+      "url": "https://mcp.buffer.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${BUFFER_ACCESS_TOKEN}"
+      }
     }
   }
 }
